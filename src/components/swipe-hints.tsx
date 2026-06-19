@@ -20,7 +20,7 @@ export function SwipeHints({ swipeCount }: { swipeCount: number }) {
               transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
               className="pointer-events-none flex items-center gap-1 rounded-full bg-white/90 px-3 py-1.5 text-xs font-bold tracking-tight text-[var(--color-pass)] shadow-lg"
             >
-              <span>← Swipe</span>
+              <span>← Pass</span>
             </motion.div>
           </motion.div>
 
@@ -35,7 +35,7 @@ export function SwipeHints({ swipeCount }: { swipeCount: number }) {
               transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
               className="pointer-events-none flex items-center gap-1 rounded-full bg-white/90 px-3 py-1.5 text-xs font-bold tracking-tight text-[var(--color-like)] shadow-lg"
             >
-              <span>Swipe →</span>
+              <span>Like →</span>
             </motion.div>
           </motion.div>
         </>
