@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion, useMotionValue, useTransform } from "framer-motion";
-import { Heart, X, Bookmark, Info } from "lucide-react";
+import { Heart, X, Bookmark } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import type { Product } from "@/lib/products";
+import { buildBuyUrl, type Product } from "@/lib/products";
 
 type Action = "like" | "pass" | "save";
 
