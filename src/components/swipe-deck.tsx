@@ -202,37 +202,6 @@ export function SwipeDeck({
           })}
       </AnimatePresence>
 
-      <ActionBar onAction={handle} />
-    </div>
-  );
-}
-
-function ActionBar({ onAction }: { onAction: (a: Action) => void }) {
-  const btn =
-    "flex items-center justify-center rounded-full shadow-lg ring-1 ring-border bg-card transition active:scale-90";
-  return (
-    <div className="pointer-events-none absolute inset-x-0 -bottom-2 z-20 flex translate-y-full items-center justify-center gap-5 pt-6">
-      <button
-        aria-label="Pass"
-        onClick={() => onAction("pass")}
-        className={`${btn} pointer-events-auto h-14 w-14 text-[var(--color-pass)]`}
-      >
-        <X className="h-7 w-7" strokeWidth={2.5} />
-      </button>
-      <button
-        aria-label="Save for later"
-        onClick={() => onAction("save")}
-        className={`${btn} pointer-events-auto h-12 w-12 text-[var(--color-save)]`}
-      >
-        <Bookmark className="h-5 w-5" strokeWidth={2.5} />
-      </button>
-      <button
-        aria-label="Like"
-        onClick={() => onAction("like")}
-        className={`${btn} pointer-events-auto h-14 w-14 text-[var(--color-like)]`}
-      >
-        <Heart className="h-7 w-7" strokeWidth={2.5} />
-      </button>
     </div>
   );
 }
