@@ -25,14 +25,11 @@ export const Route = createFileRoute("/")({
   component: Discover,
 });
 
-const SWIPE_COUNT_KEY = "swipeshop:swipe-count:v1";
-
 function Discover() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [swipeCount, setSwipeCount] = useState(() => {
-    if (typeof window === "undefined") return 0;
-    return Number(window.localStorage.getItem(SWIPE_COUNT_KEY)) || 0;
-  });
+  // Per-session counter so hints reappear on every fresh load until the user
+  // has swiped a few times this session.
+  const [swipeCount, setSwipeCount] = useState(0);
   const { like, save, pass } = useProductLists();
 
   useEffect(() => {
@@ -44,13 +41,7 @@ function Discover() {
     else if (action === "save") save(product.id);
     else pass(product.id);
 
-    setSwipeCount((prev) => {
-      const next = prev + 1;
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(SWIPE_COUNT_KEY, String(next));
-      }
-      return next;
-    });
+    setSwipeCount((prev) => prev + 1);
   };
 
   return (
