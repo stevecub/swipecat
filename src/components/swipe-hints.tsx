@@ -15,7 +15,7 @@ export function SwipeHints({ swipeCount }: { swipeCount: number }) {
             scale: expanded ? 1 : 0.45,
             x: expanded ? 0 : -14,
           }}
-          transition={{ type: "spring", stiffness: 280, damping: 22 }}
+          transition={{ type: "spring", stiffness: 60, damping: 14 }}
           className="flex origin-left flex-col items-center rounded-2xl bg-[var(--color-like)] px-3 py-2.5 text-white shadow-2xl ring-2 ring-white/40"
         >
           <div className="flex items-center">
@@ -50,7 +50,7 @@ export function SwipeHints({ swipeCount }: { swipeCount: number }) {
             scale: expanded ? 1 : 0.45,
             x: expanded ? 0 : 14,
           }}
-          transition={{ type: "spring", stiffness: 280, damping: 22 }}
+          transition={{ type: "spring", stiffness: 60, damping: 14 }}
           className="flex origin-right flex-col items-center rounded-2xl bg-[var(--color-pass)] px-3 py-2.5 text-white shadow-2xl ring-2 ring-white/40"
         >
           <div className="flex items-center">
