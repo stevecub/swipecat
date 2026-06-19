@@ -1,11 +1,12 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Flame, Heart } from "lucide-react";
+import { Flame, Heart, LayoutGrid } from "lucide-react";
 
 export function BottomNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const items = [
     { to: "/", label: "Discover", icon: Flame, active: pathname === "/" },
     { to: "/liked", label: "Liked", icon: Heart, active: pathname.startsWith("/liked") },
+    { to: "/categories", label: "Categories", icon: LayoutGrid, active: pathname.startsWith("/categories") },
   ] as const;
 
   return (
