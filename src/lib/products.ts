@@ -135,7 +135,7 @@ export async function getProduct(id: string): Promise<Product | undefined> {
  * Phase 2: when we wire in Amazon, set this from a user setting and append
  * `?tag=<AFFILIATE_TAG>` to every outbound Amazon URL.
  */
-export const AFFILIATE_TAG: string | null = null;
+export const AFFILIATE_TAG: string | null = "swipecat-20";
 
 export function buildBuyUrl(product: Product): string {
   const base = product.asin
