@@ -103,13 +103,9 @@ export function SwipeCard({
             </div>
           </div>
           {isTop && (
-            <Link
-              to="/product/$id"
-              params={{ id: product.id }}
-              className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-medium text-white backdrop-blur transition hover:bg-white/25"
-            >
-              <Info className="h-3.5 w-3.5" /> View details
-            </Link>
+            <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-medium text-white backdrop-blur">
+              Tap card to view on Amazon
+            </div>
           )}
         </div>
       </div>
