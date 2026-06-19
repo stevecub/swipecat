@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Heart, Trash2, ExternalLink } from "lucide-react";
+import { Heart, Trash2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { BottomNav } from "@/components/bottom-nav";
 import { buildBuyUrl, getProducts, type Product } from "@/lib/products";
 import { useProductLists } from "@/hooks/use-product-lists";
