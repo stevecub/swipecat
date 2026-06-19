@@ -57,41 +57,49 @@ function Liked() {
           </div>
         ) : (
           <ul className="grid grid-cols-3 gap-2.5 pt-1">
-            {items.map((p) => (
-              <li
-                key={p.id}
-                className="group relative overflow-hidden rounded-xl bg-card ring-1 ring-border"
-              >
-                <a
-                  href={buildBuyUrl(p)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block"
+            <AnimatePresence mode="popLayout">
+              {items.map((p) => (
+                <motion.li
+                  key={p.id}
+                  layout
+                  exit={{ scale: 0, opacity: 0, borderRadius: "50%" }}
+                  transition={{
+                    layout: { duration: 0.55, ease: "easeInOut" },
+                    exit: { duration: 0.45, ease: "easeInOut" },
+                  }}
+                  className="group relative overflow-hidden rounded-xl bg-card ring-1 ring-border"
                 >
-                  <div className="aspect-square overflow-hidden">
-                    <img
-                      src={p.image}
-                      alt={p.title}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition group-active:scale-95"
-                    />
-                  </div>
-                  <div className="p-2">
-                    <h3 className="line-clamp-2 text-[11px] font-medium leading-tight">
-                      {p.title}
-                    </h3>
-                    <p className="mt-1 text-xs font-bold">${p.price}</p>
-                  </div>
-                </a>
-                <button
-                  aria-label="Remove from liked"
-                  onClick={() => remove(p.id)}
-                  className="absolute right-1.5 top-1.5 rounded-full bg-black/60 p-1 text-white opacity-90 transition hover:bg-black/80"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </button>
-              </li>
-            ))}
+                  <a
+                    href={buildBuyUrl(p)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block"
+                  >
+                    <div className="aspect-square overflow-hidden">
+                      <img
+                        src={p.image}
+                        alt={p.title}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition group-active:scale-95"
+                      />
+                    </div>
+                    <div className="p-2">
+                      <h3 className="line-clamp-2 text-[11px] font-medium leading-tight">
+                        {p.title}
+                      </h3>
+                      <p className="mt-1 text-xs font-bold">${p.price}</p>
+                    </div>
+                  </a>
+                  <button
+                    aria-label="Remove from liked"
+                    onClick={() => remove(p.id)}
+                    className="absolute right-1.5 top-1.5 rounded-full bg-black/60 p-1 text-white opacity-90 transition hover:bg-black/80"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </motion.li>
+              ))}
+            </AnimatePresence>
           </ul>
         )}
       </main>
