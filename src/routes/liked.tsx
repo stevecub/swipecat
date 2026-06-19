@@ -39,6 +39,9 @@ function Liked() {
             {items.length} {items.length === 1 ? "item" : "items"}
           </span>
         </div>
+        <p className="mt-1 text-[10px] text-muted-foreground">
+          As an Amazon Associate, we earn from qualifying purchases.
+        </p>
       </header>
 
       <main className="flex-1 overflow-y-auto px-4 pb-28">
