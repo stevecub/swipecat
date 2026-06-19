@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Heart, Trash2 } from "lucide-react";
+import { Heart, Trash2, ExternalLink } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
-import { getProducts, type Product } from "@/lib/products";
+import { buildBuyUrl, getProducts, type Product } from "@/lib/products";
 import { useProductLists } from "@/hooks/use-product-lists";
 
 export const Route = createFileRoute("/liked")({
