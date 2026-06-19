@@ -1,11 +1,11 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Flame, Bookmark } from "lucide-react";
+import { Flame, Heart } from "lucide-react";
 
 export function BottomNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const items = [
     { to: "/", label: "Discover", icon: Flame, active: pathname === "/" },
-    { to: "/saved", label: "Saved", icon: Bookmark, active: pathname.startsWith("/saved") },
+    { to: "/liked", label: "Liked", icon: Heart, active: pathname.startsWith("/liked") },
   ] as const;
 
   return (
