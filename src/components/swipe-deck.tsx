@@ -42,6 +42,14 @@ export function SwipeCard({
         if (info.offset.x > 120) onSwipe("like");
         else if (info.offset.x < -120) onSwipe("pass");
       }}
+      onTap={(_, info) => {
+        // Ignore taps that were actually drags
+        const moved =
+          Math.abs((info as { offset?: { x: number; y: number } }).offset?.x ?? 0) +
+          Math.abs((info as { offset?: { x: number; y: number } }).offset?.y ?? 0);
+        if (!isTop || moved > 8) return;
+        window.open(buildBuyUrl(product), "_blank", "noopener,noreferrer");
+      }}
     >
       <div className="relative h-full w-full overflow-hidden rounded-[2rem] bg-card shadow-[0_20px_50px_-15px_rgba(0,0,0,0.25)] ring-1 ring-border">
         <img
