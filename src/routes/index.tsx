@@ -25,13 +25,33 @@ export const Route = createFileRoute("/")({
   component: Discover,
 });
 
+const SWIPE_COUNT_KEY = "swipeshop:swipe-count:v1";
+
 function Discover() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [swipeCount, setSwipeCount] = useState(() => {
+    if (typeof window === "undefined") return 0;
+    return Number(window.localStorage.getItem(SWIPE_COUNT_KEY)) || 0;
+  });
   const { like, save, pass } = useProductLists();
 
   useEffect(() => {
     getProducts().then(setProducts);
   }, []);
+
+  const handleAction = (product: Product, action: "like" | "pass" | "save") => {
+    if (action === "like") like(product.id);
+    else if (action === "save") save(product.id);
+    else pass(product.id);
+
+    setSwipeCount((prev) => {
+      const next = prev + 1;
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(SWIPE_COUNT_KEY, String(next));
+      }
+      return next;
+    });
+  };
 
   return (
     <div className="flex h-[100dvh] flex-col bg-background">
@@ -43,16 +63,9 @@ function Discover() {
       <main className="relative flex-1 px-5 pb-28">
         <div className="relative mx-auto aspect-[3/4.6] h-full max-h-[640px] w-full max-w-md">
           {products.length > 0 && (
-            <SwipeDeck
-              products={products}
-              onAction={(product, action) => {
-                if (action === "like") like(product.id);
-                else if (action === "save") save(product.id);
-                else pass(product.id);
-              }}
-            />
+            <SwipeDeck products={products} onAction={handleAction} />
           )}
-          <SwipeHints />
+          <SwipeHints swipeCount={swipeCount} />
         </div>
       </main>
 
