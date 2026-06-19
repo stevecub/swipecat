@@ -22,6 +22,16 @@ export function SwipeCard({
   const likeOpacity = useTransform(x, [40, 140], [0, 1]);
   const passOpacity = useTransform(x, [-140, -40], [1, 0]);
 
+  // Track pointer to distinguish real taps from drags / slow swipes
+  const pointerRef = useRef<{
+    startX: number;
+    startY: number;
+    startT: number;
+    maxDist: number;
+    dragging: boolean;
+    blockedUntil: number;
+  }>({ startX: 0, startY: 0, startT: 0, maxDist: 0, dragging: false, blockedUntil: 0 });
+
   return (
     <motion.div
       className="absolute inset-0"
@@ -38,16 +48,41 @@ export function SwipeCard({
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       drag={isTop ? "x" : false}
       dragConstraints={{ left: 0, right: 0 }}
+      onPointerDown={(e) => {
+        pointerRef.current = {
+          startX: e.clientX,
+          startY: e.clientY,
+          startT: performance.now(),
+          maxDist: 0,
+          dragging: false,
+          blockedUntil: pointerRef.current.blockedUntil,
+        };
+      }}
+      onPointerMove={(e) => {
+        const p = pointerRef.current;
+        const d = Math.hypot(e.clientX - p.startX, e.clientY - p.startY);
+        if (d > p.maxDist) p.maxDist = d;
+      }}
+      onDragStart={() => {
+        pointerRef.current.dragging = true;
+      }}
       onDragEnd={(_, info) => {
+        pointerRef.current.dragging = false;
+        // Block taps for 350ms after any drag to prevent stray click-through
+        pointerRef.current.blockedUntil = performance.now() + 350;
         if (info.offset.x > 120) onSwipe("like");
         else if (info.offset.x < -120) onSwipe("pass");
       }}
-      onTap={(_, info) => {
-        // Ignore taps that were actually drags
-        const moved =
-          Math.abs((info as { offset?: { x: number; y: number } }).offset?.x ?? 0) +
-          Math.abs((info as { offset?: { x: number; y: number } }).offset?.y ?? 0);
-        if (!isTop || moved > 8) return;
+      onPointerUp={(e) => {
+        if (!isTop) return;
+        const p = pointerRef.current;
+        const now = performance.now();
+        if (p.dragging) return;
+        if (now < p.blockedUntil) return;
+        const dist = Math.hypot(e.clientX - p.startX, e.clientY - p.startY);
+        const duration = now - p.startT;
+        // Real tap: barely moved, quick press, no drag was started
+        if (dist > 10 || p.maxDist > 10 || duration > 250) return;
         window.open(buildBuyUrl(product), "_blank", "noopener,noreferrer");
       }}
     >
