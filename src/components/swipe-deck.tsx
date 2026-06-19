@@ -170,13 +170,13 @@ export function SwipeDeck({
         <div className="text-5xl">✨</div>
         <h3 className="text-xl font-bold">You're all caught up</h3>
         <p className="text-sm text-muted-foreground">
-          Check back later for fresh picks — or browse what you saved.
+          Check back later for fresh picks — or browse what you liked.
         </p>
         <Link
-          to="/saved"
+          to="/liked"
           className="mt-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
         >
-          See saved items
+          See liked items
         </Link>
       </div>
     );
