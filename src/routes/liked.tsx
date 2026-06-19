@@ -61,7 +61,12 @@ function Liked() {
                 key={p.id}
                 className="group relative overflow-hidden rounded-xl bg-card ring-1 ring-border"
               >
-                <Link to="/product/$id" params={{ id: p.id }} className="block">
+                <a
+                  href={buildBuyUrl(p)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                >
                   <div className="aspect-square overflow-hidden">
                     <img
                       src={p.image}
@@ -76,7 +81,7 @@ function Liked() {
                     </h3>
                     <p className="mt-1 text-xs font-bold">${p.price}</p>
                   </div>
-                </Link>
+                </a>
                 <button
                   aria-label="Remove from liked"
                   onClick={() => remove(p.id)}
