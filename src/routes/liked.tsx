@@ -65,7 +65,8 @@ function Liked() {
                   exit={{ scale: 0, opacity: 0, borderRadius: "50%" }}
                   transition={{
                     layout: { duration: 0.55, ease: "easeInOut" },
-                    exit: { duration: 0.45, ease: "easeInOut" },
+                    duration: 0.45,
+                    ease: "easeInOut",
                   }}
                   className="group relative overflow-hidden rounded-xl bg-card ring-1 ring-border"
                 >
