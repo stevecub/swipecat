@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion, useMotionValue, useTransform } from "framer-motion";
-import { Heart, X, Bookmark, Info } from "lucide-react";
+import { Heart, X, Bookmark } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import type { Product } from "@/lib/products";
+import { buildBuyUrl, type Product } from "@/lib/products";
 
 type Action = "like" | "pass" | "save";
 
@@ -41,6 +41,14 @@ export function SwipeCard({
       onDragEnd={(_, info) => {
         if (info.offset.x > 120) onSwipe("like");
         else if (info.offset.x < -120) onSwipe("pass");
+      }}
+      onTap={(_, info) => {
+        // Ignore taps that were actually drags
+        const moved =
+          Math.abs((info as { offset?: { x: number; y: number } }).offset?.x ?? 0) +
+          Math.abs((info as { offset?: { x: number; y: number } }).offset?.y ?? 0);
+        if (!isTop || moved > 8) return;
+        window.open(buildBuyUrl(product), "_blank", "noopener,noreferrer");
       }}
     >
       <div className="relative h-full w-full overflow-hidden rounded-[2rem] bg-card shadow-[0_20px_50px_-15px_rgba(0,0,0,0.25)] ring-1 ring-border">
@@ -95,13 +103,9 @@ export function SwipeCard({
             </div>
           </div>
           {isTop && (
-            <Link
-              to="/product/$id"
-              params={{ id: product.id }}
-              className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-medium text-white backdrop-blur transition hover:bg-white/25"
-            >
-              <Info className="h-3.5 w-3.5" /> View details
-            </Link>
+            <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-medium text-white backdrop-blur">
+              Tap card to view on Amazon
+            </div>
           )}
         </div>
       </div>

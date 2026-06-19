@@ -87,18 +87,13 @@ function ProductDetail() {
         </div>
 
         <a
-          href={buyUrl ?? "#"}
-          onClick={(e) => !buyUrl && e.preventDefault()}
+          href={buyUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className={`mt-3 flex items-center justify-center gap-2 rounded-full py-3.5 text-sm font-bold ${
-            buyUrl
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground"
-          }`}
+          className="mt-3 flex items-center justify-center gap-2 rounded-full bg-primary py-3.5 text-sm font-bold text-primary-foreground"
         >
-          {buyUrl ? "Buy on Amazon" : "Buy link coming soon"}
-          {buyUrl && <ExternalLink className="h-4 w-4" />}
+          Buy on Amazon
+          <ExternalLink className="h-4 w-4" />
         </a>
         <p className="mt-2 text-center text-[10px] text-muted-foreground">
           We may earn commission on purchases.

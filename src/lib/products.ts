@@ -137,8 +137,10 @@ export async function getProduct(id: string): Promise<Product | undefined> {
  */
 export const AFFILIATE_TAG: string | null = null;
 
-export function buildBuyUrl(product: Product): string | null {
-  if (!product.asin) return null;
-  const base = `https://www.amazon.com/dp/${product.asin}`;
-  return AFFILIATE_TAG ? `${base}?tag=${AFFILIATE_TAG}` : base;
+export function buildBuyUrl(product: Product): string {
+  const base = product.asin
+    ? `https://www.amazon.com/dp/${product.asin}`
+    : `https://www.amazon.com/s?k=${encodeURIComponent(product.title)}`;
+  const sep = base.includes("?") ? "&" : "?";
+  return AFFILIATE_TAG ? `${base}${sep}tag=${AFFILIATE_TAG}` : base;
 }
