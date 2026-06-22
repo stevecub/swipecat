@@ -96,7 +96,7 @@ function ProductDetail() {
           <ExternalLink className="h-4 w-4" />
         </a>
         <p className="mt-2 text-center text-[10px] text-muted-foreground">
-          As an Amazon Associate, we earn from qualifying purchases.
+          As an Amazon Associate we earn from qualifying purchases.
         </p>
       </div>
     </div>

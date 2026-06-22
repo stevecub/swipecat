@@ -53,16 +53,21 @@ function Discover() {
 
   return (
     <div className="flex h-[100dvh] flex-col bg-background">
-      <header className="flex items-center justify-between px-5 pt-5 pb-3">
-        <h1 className="text-xl font-black tracking-tight">Swipe</h1>
-        {activeLabels.length > 0 && (
-          <Link
-            to="/categories"
-            className="text-xs font-medium text-muted-foreground hover:text-foreground"
-          >
-            {activeLabels.length === 1 ? activeLabels[0] : `${activeLabels.length} categories`}
-          </Link>
-        )}
+      <header className="px-5 pt-5 pb-2">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-black tracking-tight">Swipe</h1>
+          {activeLabels.length > 0 && (
+            <Link
+              to="/categories"
+              className="text-xs font-medium text-muted-foreground hover:text-foreground"
+            >
+              {activeLabels.length === 1 ? activeLabels[0] : `${activeLabels.length} categories`}
+            </Link>
+          )}
+        </div>
+        <p className="mt-1 text-[10px] leading-tight text-muted-foreground">
+          As an Amazon Associate we earn from qualifying purchases.
+        </p>
       </header>
 
       <main className="relative flex-1 px-5 pb-28">
