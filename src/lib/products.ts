@@ -26,6 +26,17 @@ type DbProduct = {
   review_count: number | null;
 };
 
+function upscaleAmazonImage(url: string, size = 800): string {
+  if (!url.includes("media-amazon.com")) return url;
+  // Amazon image URLs encode a max dimension like `_AC_UL320_` or `_SL500_`.
+  // Bumping it requests a higher-resolution render from their CDN.
+  return url
+    .replace(/\._([A-Z]{2,4})_UL\d+_/g, `._$1_UL${size}_`)
+    .replace(/\._SL\d+_/g, `._SL${size}_`)
+    .replace(/\._SX\d+_/g, `._SX${size}_`)
+    .replace(/\._SY\d+_/g, `._SY${size}_`);
+}
+
 function fromDb(r: DbProduct): Product {
   return {
     id: r.id,
@@ -33,13 +44,14 @@ function fromDb(r: DbProduct): Product {
     description: r.description ?? "",
     price: r.price == null ? null : Number(r.price),
     currency: r.currency,
-    image: r.image,
+    image: upscaleAmazonImage(r.image, 800),
     category: r.category,
     asin: r.asin,
     rating: r.rating == null ? null : Number(r.rating),
     reviewCount: r.review_count,
   };
 }
+
 
 export async function getProducts(): Promise<Product[]> {
   const { data, error } = await supabase
