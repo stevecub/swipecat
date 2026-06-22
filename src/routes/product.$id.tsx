@@ -59,7 +59,7 @@ function ProductDetail() {
         </span>
         <div className="mt-1 flex items-start justify-between gap-4">
           <h1 className="text-2xl font-black leading-tight">{product.title}</h1>
-          <div className="shrink-0 text-2xl font-black">${product.price}</div>
+          <div className="shrink-0 text-2xl font-black">{product.price != null ? `$${product.price}` : ""}</div>
         </div>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{product.description}</p>
 
