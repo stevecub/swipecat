@@ -126,18 +126,18 @@ export function SwipeCard({
           </span>
         </div>
 
-        <div className="absolute inset-x-0 bottom-0 p-5 text-white">
+        <div className="absolute inset-x-0 bottom-0 p-4 text-white">
           <div className="flex items-end justify-between gap-3">
             <div className="min-w-0">
-              <h2 className="truncate text-2xl font-bold leading-tight">{product.title}</h2>
-              <p className="mt-1 line-clamp-2 text-sm text-white/85">{product.description}</p>
+              <h2 className="line-clamp-2 text-base font-bold leading-tight">{product.title}</h2>
+              <p className="mt-1 line-clamp-2 text-xs text-white/85">{product.description}</p>
             </div>
             <div className="shrink-0 text-right">
-              <div className="text-2xl font-black">{product.price != null ? `$${product.price}` : ""}</div>
+              <div className="text-lg font-black">{product.price != null ? `$${product.price}` : ""}</div>
             </div>
           </div>
           {isTop && (
-            <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-medium text-white backdrop-blur">
+            <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur">
               Tap card to view on Amazon
             </div>
           )}

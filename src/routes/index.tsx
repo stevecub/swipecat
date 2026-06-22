@@ -55,16 +55,14 @@ function Discover() {
     <div className="flex h-[100dvh] flex-col bg-background">
       <header className="flex items-center justify-between px-5 pt-5 pb-3">
         <h1 className="text-xl font-black tracking-tight">Swipe</h1>
-        <Link
-          to="/categories"
-          className="text-xs font-medium text-muted-foreground hover:text-foreground"
-        >
-          {activeLabels.length === 0
-            ? "Daily picks"
-            : activeLabels.length === 1
-              ? activeLabels[0]
-              : `${activeLabels.length} categories`}
-        </Link>
+        {activeLabels.length > 0 && (
+          <Link
+            to="/categories"
+            className="text-xs font-medium text-muted-foreground hover:text-foreground"
+          >
+            {activeLabels.length === 1 ? activeLabels[0] : `${activeLabels.length} categories`}
+          </Link>
+        )}
       </header>
 
       <main className="relative flex-1 px-5 pb-28">
