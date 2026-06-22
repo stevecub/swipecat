@@ -133,7 +133,7 @@ export function SwipeCard({
               <p className="mt-1 line-clamp-2 text-sm text-white/85">{product.description}</p>
             </div>
             <div className="shrink-0 text-right">
-              <div className="text-2xl font-black">${product.price}</div>
+              <div className="text-2xl font-black">{product.price != null ? `$${product.price}` : ""}</div>
             </div>
           </div>
           {isTop && (
