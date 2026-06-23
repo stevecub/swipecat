@@ -16,7 +16,7 @@ export function SwipeHints({ swipeCount }: { swipeCount: number }) {
             y: expanded ? 0 : -14,
           }}
           transition={{ type: "spring", stiffness: 60, damping: 14 }}
-          className="flex origin-top flex-col items-center rounded-2xl bg-blue-400 px-3 py-2.5 text-white shadow-2xl ring-2 ring-white/40"
+          className="flex origin-top flex-col items-center rounded-2xl bg-blue-600 px-3 py-2.5 text-white shadow-2xl ring-2 ring-white/70"
         >
           <div className="flex items-center">
             <motion.div
