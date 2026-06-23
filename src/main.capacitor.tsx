@@ -16,8 +16,8 @@ import { RouterProvider, createRouter, createHashHistory } from "@tanstack/react
 
 import "./styles.css";
 
-// Import the generated route tree (includes all routes)
-import { routeTree } from "./routeTree.gen";
+// Import the Capacitor-specific route tree (excludes /admin which uses server functions)
+import { routeTree } from "./routeTree.capacitor";
 
 // Use hash-based history so Capacitor's file:// protocol works correctly
 // (browser history requires a server; hash history works offline/native)
