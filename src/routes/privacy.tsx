@@ -10,6 +10,9 @@ export const Route = createFileRoute("/privacy")({
           "SwipeCat privacy policy. We don't require accounts and don't sell personal data.",
       },
     ],
+    links: [
+      { rel: "canonical", href: "https://swipecat.app/privacy" },
+    ],
   }),
   component: PrivacyPage,
 });
@@ -19,10 +22,10 @@ function PrivacyPage() {
     <div className="min-h-[100dvh] bg-background">
       <header className="border-b border-border px-5 py-4">
         <Link to="/" className="text-sm font-medium text-muted-foreground">
-          ← Back
+          Back
         </Link>
         <h1 className="mt-1 text-2xl font-black tracking-tight">Privacy Policy</h1>
-        <p className="mt-1 text-xs text-muted-foreground">Last updated: June 2026</p>
+        <p className="mt-1 text-xs text-muted-foreground">Last updated: June 23, 2026</p>
       </header>
 
       <main className="prose prose-sm mx-auto max-w-2xl px-5 py-6 text-sm leading-relaxed text-foreground">
