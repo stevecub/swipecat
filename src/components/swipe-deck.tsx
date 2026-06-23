@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValue, useTransform } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { buildBuyUrl, type Product } from "@/lib/products";
+import { haptic } from "@/lib/haptics";
 
 type Action = "like" | "pass" | "save";
 
@@ -160,6 +161,8 @@ export function SwipeDeck({
   const handle = (action: Action) => {
     const current = products[index];
     if (!current) return;
+    // Native haptic feedback on iOS; no-op on web.
+    void haptic(action === "like" ? "success" : action === "save" ? "medium" : "light");
     onAction(current, action);
     setIndex((i) => i + 1);
   };

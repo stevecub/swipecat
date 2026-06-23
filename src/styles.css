@@ -147,8 +147,37 @@
     border-color: var(--color-border);
   }
 
+  html,
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    /* Prevent rubber-band scroll on iOS / native shell */
+    overscroll-behavior: none;
+    /* Stop iOS from auto-adjusting text on rotation */
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    /* Disable iOS tap highlight + system text selection on the app shell.
+       Inputs / textareas re-enable selection below. */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+    /* Honor the notch / Dynamic Island */
+    padding-top: env(safe-area-inset-top);
+  }
+
+  input,
+  textarea,
+  [contenteditable="true"] {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  /* Disable iOS callout (long-press magnifier) on images and swipe cards */
+  img,
+  [data-no-callout] {
+    -webkit-touch-callout: none;
   }
 }
+
