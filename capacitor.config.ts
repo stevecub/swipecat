@@ -3,7 +3,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 const config: CapacitorConfig = {
   appId: "app.swipecat",
   appName: "SwipeCat",
-  webDir: ".output/public",
+  webDir: "dist",
   ios: {
     contentInset: "always",
     backgroundColor: "#FFFFFF",
