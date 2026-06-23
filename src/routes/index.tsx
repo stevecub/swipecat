@@ -53,7 +53,10 @@ function Discover() {
 
   return (
     <div className="flex h-[100dvh] flex-col bg-background">
-      <header className="px-5 pt-5 pb-2">
+      <header
+        className="px-5 pb-2"
+        style={{ paddingTop: "max(1.25rem, env(safe-area-inset-top))" }}
+      >
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-black tracking-tight">Swipe</h1>
           {activeLabels.length > 0 && (
@@ -66,7 +69,10 @@ function Discover() {
           )}
         </div>
         <p className="mt-1 text-[10px] leading-tight text-muted-foreground">
-          As an Amazon Associate we earn from qualifying purchases.
+          As an Amazon Associate we earn from qualifying purchases.{" "}
+          <Link to="/about" className="underline">
+            Learn more
+          </Link>
         </p>
       </header>
 
