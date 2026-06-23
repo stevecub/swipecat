@@ -11,12 +11,38 @@ type RainforestResult = {
   ratings_total?: number;
   price?: { value?: number; currency?: string };
   prices?: Array<{ value?: number; currency?: string }>;
+  description?: string;
+  // Rainforest search results sometimes include a snippet
+  snippet?: string;
+};
+
+/**
+ * Maps category labels to more targeted Amazon search terms.
+ * Using specific, high-visual-appeal search terms improves product quality
+ * and image richness in the swipe feed.
+ */
+const CATEGORY_SEARCH_TERMS: Record<string, string> = {
+  "Women's Shoes": "women's shoes trending",
+  "Electronics": "cool electronics gadgets",
+  "Women's Fashion": "women's fashion clothing trending",
+  "Men's Fashion": "men's fashion clothing trending",
+  "Beauty & Skincare": "beauty skincare bestsellers",
+  "Home Decor": "home decor aesthetic",
+  "Kitchen Gadgets": "kitchen gadgets cool",
+  "Fitness & Activewear": "fitness activewear workout",
+  "Jewelry & Accessories": "jewelry accessories trending",
+  "Pet Supplies": "pet supplies popular",
 };
 
 /**
  * Seeds the products table from Rainforest API.
  * Requires the caller to be an authenticated admin.
  * Uses the search endpoint: 1 request per category, ~16 products each.
+ *
+ * Architecture: Rainforest API → Supabase cache → App
+ * Products are fetched from Rainforest and stored in Supabase so the mobile
+ * app can read them quickly without hitting Rainforest on every swipe.
+ * Re-run this function periodically to refresh the catalog with fresh listings.
  */
 export const seedProducts = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -34,7 +60,7 @@ export const seedProducts = createServerFn({ method: "POST" })
     }
 
     const apiKey = process.env.RAINFOREST_API_KEY;
-    if (!apiKey) throw new Error("RAINFOREST_API_KEY is not configured");
+    if (!apiKey) throw new Error("RAINFOREST_API_KEY is not configured. Add it to your .env file.");
 
     const { supabaseAdmin } = await import(
       "@/integrations/supabase/client.server"
@@ -52,12 +78,20 @@ export const seedProducts = createServerFn({ method: "POST" })
 
     for (const cat of targets) {
       try {
+        // Use targeted search term if available, otherwise fall back to category label
+        const searchTerm = CATEGORY_SEARCH_TERMS[cat.label] ?? cat.label;
+
         const url = new URL("https://api.rainforestapi.com/request");
         url.searchParams.set("api_key", apiKey);
         url.searchParams.set("type", "search");
         url.searchParams.set("amazon_domain", "amazon.com");
-        url.searchParams.set("search_term", cat.label);
+        url.searchParams.set("search_term", searchTerm);
         url.searchParams.set("sort_by", "featured");
+        // Only return fields we actually use to keep response size small
+        url.searchParams.set(
+          "fields",
+          "search_results.asin,search_results.title,search_results.image,search_results.rating,search_results.ratings_total,search_results.price,search_results.prices",
+        );
 
         const res = await fetch(url.toString());
         if (!res.ok) {
@@ -72,9 +106,11 @@ export const seedProducts = createServerFn({ method: "POST" })
           .map((r) => {
             const price = r.price?.value ?? r.prices?.[0]?.value ?? null;
             const currency = r.price?.currency ?? r.prices?.[0]?.currency ?? "USD";
+            // Use snippet/description if available; otherwise leave blank (product detail page has full copy)
+            const description = r.snippet ?? r.description ?? "";
             return {
               title: r.title!.slice(0, 300),
-              description: "",
+              description: description.slice(0, 1000),
               price: price as number | null,
               currency,
               image: r.image!,

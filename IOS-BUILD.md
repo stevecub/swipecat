@@ -15,6 +15,44 @@ only need to run a handful of commands and click through a few Xcode screens.
 - Node.js 20+ and npm
 - CocoaPods (`sudo gem install cocoapods` if not installed — Xcode usually
   prompts you the first time)
+- A Rainforest API key (get one free at https://app.rainforestapi.com/)
+
+---
+
+## Step 1 — Configure environment variables
+
+Before building, copy `.env` to `.env.local` (or edit `.env` directly) and
+fill in your secrets:
+
+```
+RAINFOREST_API_KEY="your-key-here"
+```
+
+The Rainforest key is **server-side only** — it is never bundled into the
+iOS app. It is used exclusively by the admin seeding function to populate the
+Supabase product catalog. The iOS app reads products from Supabase.
+
+You will also need your Supabase service role key for the admin seeding to
+work. Add it to `.env`:
+
+```
+SUPABASE_SERVICE_ROLE_KEY="your-supabase-service-role-key"
+```
+
+---
+
+## Step 2 — Seed the product catalog (one-time, then refresh as needed)
+
+1. Deploy the app to your hosting environment (or run `npm run dev` locally).
+2. Navigate to `/admin` in a browser.
+3. Sign up for an admin account and click **Claim admin**.
+4. Select the categories you want and click **Seed categories**.
+   - Each category costs 1 Rainforest API credit (~16 products per category).
+   - 10 categories = 10 credits total.
+5. Products are fetched from Rainforest and stored in Supabase.
+   The iOS app reads from Supabase — no Rainforest calls happen on-device.
+
+Re-run this step whenever you want to refresh the catalog with new listings.
 
 ---
 
@@ -97,3 +135,27 @@ npm run build
 npx cap sync ios
 # In Xcode: bump Build number (1 → 2 → 3 …), Product → Archive, upload.
 ```
+
+---
+
+## Rainforest API — Architecture Notes
+
+SwipeCat uses a **cache-first** architecture for product data:
+
+```
+Rainforest API
+     │
+     │  (admin seeds catalog — server-side only)
+     ▼
+Supabase (products table)
+     │
+     │  (iOS app reads products — fast, no API credits used)
+     ▼
+SwipeCat iOS App
+```
+
+This means:
+- The iOS app never calls Rainforest directly — no API key is needed on-device.
+- Products are always fast to load (Supabase read, not a live scrape).
+- You control the catalog: seed it, refresh it, or curate it from the admin panel.
+- Rainforest credits are only consumed when you explicitly seed from the admin panel.
