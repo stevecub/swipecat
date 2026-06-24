@@ -19,8 +19,52 @@ import "./styles.css";
 // Import the Capacitor-specific route tree (excludes /admin which uses server functions)
 import { routeTree } from "./routeTree.capacitor";
 
-// Use hash-based history so Capacitor's file:// protocol works correctly
-// (browser history requires a server; hash history works offline/native)
+// ─── React Error Boundary ─────────────────────────────────────────────────────
+// Class component required for componentDidCatch / getDerivedStateFromError
+interface EBState { hasError: boolean; error: Error | null }
+class AppErrorBoundary extends React.Component<{ children: React.ReactNode }, EBState> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: Error): EBState {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error('[SwipeCat] Uncaught React error:', error, info);
+    // Show the boot status with the error message
+    const bootEl = document.getElementById('boot-status');
+    const bootMsg = document.getElementById('boot-msg');
+    if (bootEl) {
+      bootEl.style.background = '#c0392b';
+      bootEl.classList.remove('hidden');
+    }
+    if (bootMsg) bootMsg.textContent = 'React error: ' + (error?.message || String(error));
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '40px', background: '#c0392b', color: 'white', minHeight: '100vh', fontFamily: 'system-ui', boxSizing: 'border-box' }}>
+          <h2 style={{ margin: '0 0 16px' }}>SwipeCat Error</h2>
+          <p style={{ fontSize: '14px', wordBreak: 'break-all', margin: '0 0 8px' }}>
+            {this.state.error?.message || 'Unknown error'}
+          </p>
+          <button
+            onClick={() => this.setState({ hasError: false, error: null })}
+            style={{ marginTop: '16px', padding: '8px 16px', background: 'white', color: '#c0392b', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+          >
+            Retry
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// ─── Router setup ─────────────────────────────────────────────────────────────
+// Use hash-based history so Capacitor's capacitor://localhost scheme works correctly
+// (browser history requires a server; hash history works with any URL scheme)
 const hashHistory = createHashHistory();
 
 const queryClient = new QueryClient({
@@ -46,12 +90,36 @@ declare module "@tanstack/react-router" {
   }
 }
 
-const rootElement = document.getElementById("root")!;
+// ─── Mount ────────────────────────────────────────────────────────────────────
+const rootElement = document.getElementById("root");
 
-ReactDOM.createRoot(rootElement).render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
-  </React.StrictMode>,
-);
+if (!rootElement) {
+  // This should never happen, but just in case
+  document.body.innerHTML = '<div style="padding:40px;color:red;font-family:system-ui;background:#c0392b;color:white;min-height:100vh">FATAL: #root element not found</div>';
+} else {
+  try {
+    ReactDOM.createRoot(rootElement).render(
+      <React.StrictMode>
+        <AppErrorBoundary>
+          <QueryClientProvider client={queryClient}>
+            <RouterProvider router={router} />
+          </QueryClientProvider>
+        </AppErrorBoundary>
+      </React.StrictMode>,
+    );
+
+    // Hide the diagnostic boot screen once React has started rendering
+    // Use a short delay to ensure the first render is complete
+    setTimeout(() => {
+      if (typeof (window as any).__swipecatHideBoot === 'function') {
+        (window as any).__swipecatHideBoot();
+      }
+    }, 200);
+  } catch (err: any) {
+    const msg = err?.message || String(err);
+    document.body.innerHTML = `<div style="padding:40px;background:#c0392b;color:white;font-family:system-ui;min-height:100vh;box-sizing:border-box">
+      <h2 style="margin:0 0 16px">SwipeCat Boot Error</h2>
+      <p style="font-size:14px;word-break:break-all;margin:0">${msg}</p>
+    </div>`;
+  }
+}

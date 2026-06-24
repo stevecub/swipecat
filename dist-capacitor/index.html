@@ -11,32 +11,101 @@
     <meta name="apple-mobile-web-app-title" content="SwipeCat" />
     <meta name="theme-color" content="#E5306B" />
     <meta name="format-detection" content="telephone=no" />
-    <title>SwipeCat — Swipe to discover products</title>
-    <meta
-      name="description"
-      content="SwipeCat lets you swipe through curated Amazon products. Right to like, left to pass. Discover things you'll actually buy."
-    />
-    <script type="module" src="/assets/index.capacitor-Bg4JzjOs.js"></script>
-    <link rel="stylesheet" href="/assets/index-DQkp-IAM.css">
+    <title>SwipeCat</title>
+    <style>
+      /* Inline critical styles — no external CSS dependency */
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background: #fff;
+        font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+      }
+      #root {
+        width: 100%;
+        height: 100%;
+      }
+      /* Diagnostic loading state — bright pink so it's always visible */
+      #boot-status {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: #E5306B;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: bold;
+        z-index: 9999;
+        padding: 40px;
+        box-sizing: border-box;
+        text-align: center;
+      }
+      #boot-status.hidden { display: none; }
+      #boot-status p { font-size: 13px; font-weight: normal; margin-top: 8px; opacity: 0.9; word-break: break-all; }
+    </style>
+    <script type="module" src="/assets/index.capacitor-Diyee2l5.js"></script>
+    <link rel="stylesheet" href="/assets/index-DY8KsNIi.css">
   </head>
   <body>
+    <!-- Diagnostic overlay: shows pink "Loading..." until React mounts -->
+    <!-- If you see this screen, HTML loaded but React didn't mount -->
+    <div id="boot-status">
+      SwipeCat
+      <p id="boot-msg">Loading app...</p>
+    </div>
+
     <div id="root"></div>
+
     <script>
-      // Global error handler — catches any uncaught errors during app bootstrap
-      window.onerror = function(msg, url, line, col, error) {
-        var el = document.getElementById('root');
-        if (el && !el.hasChildNodes()) {
-          el.innerHTML = '<div style="padding:40px;font-family:system-ui;color:#333;"><h2 style="color:#E5306B;">SwipeCat Error</h2><p style="font-size:14px;word-break:break-all;">' + msg + '</p><p style="font-size:12px;color:#666;">at ' + url + ':' + line + ':' + col + '</p></div>';
+      // ─── Diagnostic helpers ───────────────────────────────────────────────
+      function showError(msg) {
+        var el = document.getElementById('boot-status');
+        var msgEl = document.getElementById('boot-msg');
+        if (el) {
+          el.style.background = '#c0392b';
+          el.classList.remove('hidden');
         }
+        if (msgEl) msgEl.textContent = msg;
+        console.error('[SwipeCat boot]', msg);
+      }
+
+      function hideBootScreen() {
+        var el = document.getElementById('boot-status');
+        if (el) el.classList.add('hidden');
+      }
+
+      // Expose hideBootScreen globally so React can call it after mounting
+      window.__swipecatHideBoot = hideBootScreen;
+
+      // ─── Global error handlers ────────────────────────────────────────────
+      window.onerror = function(msg, url, line, col, error) {
+        showError('JS Error: ' + msg + ' (' + (url || '?') + ':' + line + ')');
         return false;
       };
+
       window.addEventListener('unhandledrejection', function(event) {
-        var el = document.getElementById('root');
-        if (el && !el.hasChildNodes()) {
-          var reason = event.reason ? (event.reason.message || String(event.reason)) : 'Unknown promise rejection';
-          el.innerHTML = '<div style="padding:40px;font-family:system-ui;color:#333;"><h2 style="color:#E5306B;">SwipeCat Error</h2><p style="font-size:14px;word-break:break-all;">' + reason + '</p></div>';
-        }
+        var reason = event.reason;
+        var msg = reason
+          ? (reason.message || (typeof reason === 'string' ? reason : JSON.stringify(reason)))
+          : 'Unhandled promise rejection';
+        showError('Promise Error: ' + msg);
       });
+
+      // ─── Module load error detection ─────────────────────────────────────
+      // If the main script fails to load (404, CORS, etc.) we won't get onerror
+      // So we set a timeout to detect if React never mounts
+      setTimeout(function() {
+        var root = document.getElementById('root');
+        var boot = document.getElementById('boot-status');
+        if (boot && !boot.classList.contains('hidden')) {
+          // Boot screen still showing after 8 seconds = React never mounted
+          showError('Timeout: React did not mount after 8s. Check JS bundle load.');
+        }
+      }, 8000);
     </script>
+
   </body>
 </html>

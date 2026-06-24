@@ -7,6 +7,8 @@
  * - NO head() config (meta tags and CSS are already in index.capacitor.html;
  *   HeadContent in SPA mode would try to inject duplicate <link> tags that
  *   may fail on the capacitor:// protocol)
+ * - ErrorComponent does NOT use useRouter() (which can throw if the router
+ *   hasn't initialized, causing React to unmount everything → blank screen)
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -14,61 +16,51 @@ import {
   Outlet,
   Link,
   createRootRouteWithContext,
-  useRouter,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
-        </p>
-        <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Go home
-          </Link>
-        </div>
+    <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', padding: '1rem', fontFamily: 'system-ui' }}>
+      <div style={{ maxWidth: '28rem', textAlign: 'center' }}>
+        <h1 style={{ fontSize: '4rem', fontWeight: 'bold', margin: 0 }}>404</h1>
+        <h2 style={{ marginTop: '1rem' }}>Page not found</h2>
+        <p style={{ color: '#666' }}>The page you're looking for doesn't exist.</p>
+        <a href="/" style={{ display: 'inline-block', marginTop: '1.5rem', padding: '0.5rem 1rem', background: '#E5306B', color: 'white', borderRadius: '0.5rem', textDecoration: 'none' }}>
+          Go home
+        </a>
       </div>
     </div>
   );
 }
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
-  console.error("SwipeCat error:", error);
-  const router = useRouter();
+  // IMPORTANT: Do NOT use useRouter() here — if the router hasn't initialized
+  // when this error fires, useRouter() throws, causing React to unmount
+  // everything and show a blank screen.
+  console.error("SwipeCat route error:", error);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
+    <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', padding: '1rem', fontFamily: 'system-ui', background: '#fff' }}>
+      <div style={{ maxWidth: '28rem', textAlign: 'center' }}>
+        <h1 style={{ fontSize: '1.25rem', fontWeight: '600', margin: 0 }}>
           This page didn't load
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+        <p style={{ color: '#666', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+          Something went wrong. Try going back home.
         </p>
-        <p className="mt-2 text-xs text-red-400 font-mono break-all">
+        <p style={{ color: '#e74c3c', fontSize: '0.75rem', fontFamily: 'monospace', marginTop: '0.5rem', wordBreak: 'break-all' }}>
           {error?.message}
         </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
+        <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
           <button
-            onClick={() => {
-              router.invalidate();
-              reset();
-            }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            onClick={reset}
+            style={{ padding: '0.5rem 1rem', background: '#E5306B', color: 'white', border: 'none', borderRadius: '0.5rem', cursor: 'pointer', fontSize: '0.875rem' }}
           >
             Try again
           </button>
           <a
             href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+            style={{ padding: '0.5rem 1rem', background: '#f5f5f5', color: '#333', border: '1px solid #ddd', borderRadius: '0.5rem', textDecoration: 'none', fontSize: '0.875rem' }}
           >
             Go home
           </a>
