@@ -1,3 +1,11 @@
+# Environment variables — NEVER commit secrets to git
+.env
+.env.*
+!.env.example
+
+# Capacitor pre-built assets — built locally from source, not committed
+dist-capacitor
+
 # Logs
 logs
 *.log

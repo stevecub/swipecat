@@ -62,14 +62,14 @@ Re-run this step whenever you want to refresh the catalog with new listings.
 git clone <your-repo-url> swipecat
 cd swipecat
 npm install
-npm run build
+npm run build:capacitor  # ⚠️ IMPORTANT: use build:capacitor, NOT npm run build
 npx cap add ios          # creates the ios/ folder — only on first run
 npx cap sync ios         # copies the latest web build into the iOS shell
 npx cap open ios         # opens Xcode
 ```
 
 If `npx cap add ios` says "ios platform already exists", skip it and continue
-with `npx cap sync ios`. You'll re-run `npm run build && npx cap sync ios`
+with `npx cap sync ios`. You'll re-run `npm run build:capacitor && npx cap sync ios`
 every time you pull new web changes from Lovable.
 
 ---
@@ -99,7 +99,7 @@ When Xcode opens:
 If you change anything in the web app afterwards, run from the project root:
 
 ```bash
-npm run build && npx cap sync ios
+npm run build:capacitor && npx cap sync ios
 ```
 
 Then re-build in Xcode.
@@ -131,7 +131,7 @@ Then in your browser at <https://appstoreconnect.apple.com>:
 ```bash
 git pull
 npm install                          # only if dependencies changed
-npm run build
+npm run build:capacitor              # ⚠️ NOT npm run build — that's the SSR/web build
 npx cap sync ios
 # In Xcode: bump Build number (1 → 2 → 3 …), Product → Archive, upload.
 ```
