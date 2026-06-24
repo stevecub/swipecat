@@ -91,10 +91,20 @@ export default defineConfig(({ mode }) => {
       },
     },
 
-    // Inject VITE_* env vars into the build
+    // Inject VITE_* env vars into the build.
+    // Hardcoded fallbacks ensure the build works even if .env is missing on
+    // the builder's machine (e.g. after git pull removed .env from tracking).
     define: {
-      "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(env.VITE_SUPABASE_URL),
-      "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(env.VITE_SUPABASE_PUBLISHABLE_KEY),
+      "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(
+        env.VITE_SUPABASE_URL || "https://mazdacdhptwvadmdddeh.supabase.co"
+      ),
+      "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(
+        env.VITE_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_wtBSh07eBdQJc76Bb5gBrw_gUwTa2y3"
+      ),
+      // Stub process.env so the Supabase client's SSR fallback path
+      // (process.env.SUPABASE_URL) never throws 'process is not defined'
+      // in WKWebView / the iOS browser environment.
+      "process.env": JSON.stringify({}),
     },
 
     resolve: {
