@@ -5,7 +5,7 @@
  * This file is manually maintained. If you add new user-facing routes,
  * add them here too.
  */
-import { Route as rootRouteImport } from './routes/__root'
+import { Route as rootRouteImport } from './routes/__root.capacitor'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as LikedRouteImport } from './routes/liked'
 import { Route as CategoriesRouteImport } from './routes/categories'

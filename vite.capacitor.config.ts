@@ -13,7 +13,7 @@ import { defineConfig, loadEnv, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
-import { rename } from "fs/promises";
+import { readFile, rename, writeFile } from "fs/promises";
 import { join } from "path";
 
 /**
@@ -38,6 +38,36 @@ function renameHtmlPlugin(): Plugin {
   };
 }
 
+/**
+ * Post-build plugin: strips `crossorigin` attributes from the output HTML.
+ *
+ * Vite automatically adds `crossorigin` to ES module script tags and their
+ * associated CSS link tags. On the `capacitor://localhost` protocol (non-http),
+ * the crossorigin attribute causes WKWebView to fail loading resources silently
+ * because CORS doesn't apply to custom URL schemes.
+ */
+function stripCrossoriginPlugin(): Plugin {
+  return {
+    name: "strip-crossorigin",
+    closeBundle: async () => {
+      const outDir = join(process.cwd(), "dist-capacitor");
+      const htmlPath = join(outDir, "index.html");
+      try {
+        let html = await readFile(htmlPath, "utf-8");
+        const original = html;
+        // Remove crossorigin attribute (with or without value)
+        html = html.replace(/\s+crossorigin(?:="[^"]*")?/gi, "");
+        if (html !== original) {
+          await writeFile(htmlPath, html, "utf-8");
+          console.log("✓ Stripped crossorigin attributes from index.html");
+        }
+      } catch (err) {
+        console.warn("⚠ Could not strip crossorigin:", err);
+      }
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => {
   // Load .env so VITE_* vars are available at build time
   const env = loadEnv(mode, process.cwd(), "");
@@ -48,6 +78,7 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       tsconfigPaths(),
       renameHtmlPlugin(),
+      stripCrossoriginPlugin(),
     ],
 
     // Entry point is the Capacitor-specific HTML

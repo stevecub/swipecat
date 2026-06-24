@@ -19,6 +19,23 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Global error handler — catches any uncaught errors during app bootstrap
+      window.onerror = function(msg, url, line, col, error) {
+        var el = document.getElementById('root');
+        if (el && !el.hasChildNodes()) {
+          el.innerHTML = '<div style="padding:40px;font-family:system-ui;color:#333;"><h2 style="color:#E5306B;">SwipeCat Error</h2><p style="font-size:14px;word-break:break-all;">' + msg + '</p><p style="font-size:12px;color:#666;">at ' + url + ':' + line + ':' + col + '</p></div>';
+        }
+        return false;
+      };
+      window.addEventListener('unhandledrejection', function(event) {
+        var el = document.getElementById('root');
+        if (el && !el.hasChildNodes()) {
+          var reason = event.reason ? (event.reason.message || String(event.reason)) : 'Unknown promise rejection';
+          el.innerHTML = '<div style="padding:40px;font-family:system-ui;color:#333;"><h2 style="color:#E5306B;">SwipeCat Error</h2><p style="font-size:14px;word-break:break-all;">' + reason + '</p></div>';
+        }
+      });
+    </script>
     <script type="module" src="/src/main.capacitor.tsx"></script>
   </body>
 </html>
