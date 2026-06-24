@@ -4,7 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { buildBuyUrl, type Product } from "@/lib/products";
 import { haptic } from "@/lib/haptics";
 
-type Action = "like" | "pass" | "save";
+type Action = "like" | "pass";
 
 export function SwipeCard({
   product,
@@ -18,11 +18,9 @@ export function SwipeCard({
   stackIndex: number;
 }) {
   const x = useMotionValue(0);
-  const y = useMotionValue(0);
   const rotate = useTransform(x, [-200, 0, 200], [-18, 0, 18]);
   const likeOpacity = useTransform(x, [40, 140], [0, 1]);
   const passOpacity = useTransform(x, [-140, -40], [1, 0]);
-  const saveOpacity = useTransform(y, [-140, -40], [1, 0]);
 
   // Track pointer to distinguish real taps from drags / slow swipes
   const pointerRef = useRef<{
@@ -39,7 +37,6 @@ export function SwipeCard({
       className="absolute inset-0"
       style={{
         x: isTop ? x : 0,
-        y: isTop ? y : 0,
         rotate: isTop ? rotate : 0,
         zIndex: 10 - stackIndex,
       }}
@@ -49,8 +46,8 @@ export function SwipeCard({
         y: stackIndex * 10,
       }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      drag={isTop ? true : false}
-      dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+      drag={isTop ? "x" : false}
+      dragConstraints={{ left: 0, right: 0 }}
       onPointerDown={(e) => {
         pointerRef.current = {
           startX: e.clientX,
@@ -73,10 +70,7 @@ export function SwipeCard({
         pointerRef.current.dragging = false;
         // Block taps for 350ms after any drag to prevent stray click-through
         pointerRef.current.blockedUntil = performance.now() + 350;
-        // Swipe up to save takes priority if the vertical offset is dominant
-        if (info.offset.y < -120 && Math.abs(info.offset.y) > Math.abs(info.offset.x)) {
-          onSwipe("save");
-        } else if (info.offset.x > 120) {
+        if (info.offset.x > 120) {
           onSwipe("like");
         } else if (info.offset.x < -120) {
           onSwipe("pass");
@@ -104,7 +98,7 @@ export function SwipeCard({
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
 
-        {/* Swipe tint overlays */}
+        {/* Swipe tint overlays — like and pass only */}
         {isTop && (
           <>
             <motion.div
@@ -114,10 +108,6 @@ export function SwipeCard({
             <motion.div
               className="absolute inset-0 bg-[var(--color-pass)]/30 pointer-events-none"
               style={{ opacity: passOpacity }}
-            />
-            <motion.div
-              className="absolute inset-0 bg-blue-400/30 pointer-events-none"
-              style={{ opacity: saveOpacity }}
             />
             <motion.div
               className="absolute left-5 top-6 rotate-[-12deg] rounded-lg border-4 border-[var(--color-like)] px-3 py-1 text-xl font-black tracking-widest text-[var(--color-like)]"
@@ -130,12 +120,6 @@ export function SwipeCard({
               style={{ opacity: passOpacity }}
             >
               PASS
-            </motion.div>
-            <motion.div
-              className="absolute left-1/2 top-6 -translate-x-1/2 rounded-lg border-4 border-blue-400 px-3 py-1 text-xl font-black tracking-widest text-blue-400"
-              style={{ opacity: saveOpacity }}
-            >
-              SAVE
             </motion.div>
           </>
         )}
@@ -181,7 +165,7 @@ export function SwipeDeck({
     const current = products[index];
     if (!current) return;
     // Native haptic feedback on iOS; no-op on web.
-    void haptic(action === "like" ? "success" : action === "save" ? "medium" : "light");
+    void haptic(action === "like" ? "success" : "light");
     onAction(current, action);
     setIndex((i) => i + 1);
   };

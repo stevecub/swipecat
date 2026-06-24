@@ -46,7 +46,7 @@ function Discover() {
   const [swipeCount, setSwipeCount] = useState(0);
   const fetchingRef = useRef(false);
 
-  const { lists, like, save, pass } = useProductLists();
+  const { lists, like, pass } = useProductLists();
   const { selected } = useCategories();
 
   // Load products on mount
@@ -54,11 +54,10 @@ function Discover() {
     getProducts().then(setProducts);
   }, []);
 
-  // Build the set of already-actioned IDs (liked + passed) so we never show them again.
-  // Saved items still appear in the deck — the user may want to swipe on them again.
-  const seenIds = useMemo(
-    () => new Set([...lists.liked, ...lists.passed]),
-    // Re-compute only when the count changes, not on every render
+  // Build a stable joined string of seen IDs so useMemo only re-runs when
+  // the actual set of seen items changes, not on every render.
+  const seenKey = useMemo(
+    () => [...lists.liked, ...lists.passed].sort().join(","),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [lists.liked.length, lists.passed.length],
   );
@@ -67,14 +66,15 @@ function Discover() {
   // when multiple categories are selected the results are interleaved randomly
   // rather than appearing in database-insertion order (which groups by category).
   const filtered = useMemo(() => {
+    const seenSet = new Set([...lists.liked, ...lists.passed]);
     const base = products.filter(
-      (p) => !seenIds.has(p.id) && productMatchesCategories(p.category, selected),
+      (p) => !seenSet.has(p.id) && productMatchesCategories(p.category, selected),
     );
     return shuffle(base);
-    // Shuffle whenever the pool or category selection changes.
-    // seenIds.size is used as a proxy to avoid re-shuffling on every render.
+    // Use seenKey (a stable string) instead of seenIds (a new Set object each time)
+    // so the shuffle only re-runs when the seen set actually changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [products, selected, seenIds]);
+  }, [products, selected, seenKey]);
 
   // Auto-refresh: when fewer than REFETCH_THRESHOLD unseen cards remain,
   // silently fetch a fresh batch from Supabase and append any genuinely new
@@ -98,9 +98,8 @@ function Discover() {
     .map((id) => CATEGORIES.find((c) => c.id === id)?.label)
     .filter(Boolean) as string[];
 
-  const handleAction = (product: Product, action: "like" | "pass" | "save") => {
+  const handleAction = (product: Product, action: "like" | "pass") => {
     if (action === "like") like(product.id);
-    else if (action === "save") save(product.id);
     else pass(product.id);
     setSwipeCount((prev) => prev + 1);
   };
