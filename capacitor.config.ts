@@ -11,8 +11,11 @@ const config: CapacitorConfig = {
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 1200,
-      launchAutoHide: true,
+      launchShowDuration: 0,
+      // Keep splash visible until SplashScreen.hide() is called from JS.
+      // With launchAutoHide:true the splash hides after 1200ms regardless
+      // of whether React has mounted — leaving a white WKWebView behind it.
+      launchAutoHide: false,
       backgroundColor: "#E5306B",
       iosSpinnerStyle: "small",
       spinnerColor: "#FFFFFF",
