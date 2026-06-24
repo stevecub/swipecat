@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { SwipeDeck } from "@/components/swipe-deck";
 import { SwipeHints } from "@/components/swipe-hints";
 import { BottomNav } from "@/components/bottom-nav";
@@ -12,13 +12,13 @@ import { Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Swipe — Discover products you'll love" },
+      { title: "SwipeCat — Discover products you'll love" },
       {
         name: "description",
         content:
           "Swipe through hand-picked products. Right to like, left to pass, up to save for later.",
       },
-      { property: "og:title", content: "Swipe — Discover products you'll love" },
+      { property: "og:title", content: "SwipeCat — Discover products you'll love" },
       {
         property: "og:description",
         content: "A Tinder-style way to discover great products on your phone.",
@@ -28,26 +28,80 @@ export const Route = createFileRoute("/")({
   component: Discover,
 });
 
+/** Fisher-Yates shuffle — returns a new shuffled array without mutating the original */
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/** Trigger a background refresh when this many unseen cards remain */
+const REFETCH_THRESHOLD = 20;
+
 function Discover() {
   const [products, setProducts] = useState<Product[]>([]);
   const [swipeCount, setSwipeCount] = useState(0);
-  const { like, save, pass } = useProductLists();
+  const fetchingRef = useRef(false);
+
+  const { lists, like, save, pass } = useProductLists();
   const { selected } = useCategories();
 
-  const filtered = products.filter((p) => productMatchesCategories(p.category, selected));
-  const activeLabels = selected
-    .map((id) => CATEGORIES.find((c) => c.id === id)?.label)
-    .filter(Boolean) as string[];
-
+  // Load products on mount
   useEffect(() => {
     getProducts().then(setProducts);
   }, []);
+
+  // Build the set of already-actioned IDs (liked + passed) so we never show them again.
+  // Saved items still appear in the deck — the user may want to swipe on them again.
+  const seenIds = useMemo(
+    () => new Set([...lists.liked, ...lists.passed]),
+    // Re-compute only when the count changes, not on every render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [lists.liked.length, lists.passed.length],
+  );
+
+  // Filter by category AND exclude already-seen items, then shuffle so that
+  // when multiple categories are selected the results are interleaved randomly
+  // rather than appearing in database-insertion order (which groups by category).
+  const filtered = useMemo(() => {
+    const base = products.filter(
+      (p) => !seenIds.has(p.id) && productMatchesCategories(p.category, selected),
+    );
+    return shuffle(base);
+    // Shuffle whenever the pool or category selection changes.
+    // seenIds.size is used as a proxy to avoid re-shuffling on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products, selected, seenIds]);
+
+  // Auto-refresh: when fewer than REFETCH_THRESHOLD unseen cards remain,
+  // silently fetch a fresh batch from Supabase and append any genuinely new
+  // products (ones not already in the local pool).
+  useEffect(() => {
+    if (filtered.length < REFETCH_THRESHOLD && !fetchingRef.current && products.length > 0) {
+      fetchingRef.current = true;
+      getProducts().then((fresh) => {
+        setProducts((prev) => {
+          const existingIds = new Set(prev.map((p) => p.id));
+          const newOnes = fresh.filter((p) => !existingIds.has(p.id));
+          fetchingRef.current = false;
+          // Only update state if there are actually new products to add
+          return newOnes.length > 0 ? [...prev, ...newOnes] : prev;
+        });
+      });
+    }
+  }, [filtered.length, products.length]);
+
+  const activeLabels = selected
+    .map((id) => CATEGORIES.find((c) => c.id === id)?.label)
+    .filter(Boolean) as string[];
 
   const handleAction = (product: Product, action: "like" | "pass" | "save") => {
     if (action === "like") like(product.id);
     else if (action === "save") save(product.id);
     else pass(product.id);
-
     setSwipeCount((prev) => prev + 1);
   };
 
@@ -58,7 +112,19 @@ function Discover() {
         style={{ paddingTop: "max(1.25rem, env(safe-area-inset-top))" }}
       >
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-black tracking-tight">Swipe</h1>
+          {/* SwipeCat branding: cat icon + wordmark */}
+          <div className="flex items-center gap-2">
+            <img
+              src="/icon-192.png"
+              alt=""
+              aria-hidden="true"
+              className="h-8 w-8 rounded-xl object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
+            />
+            <h1 className="text-xl font-black tracking-tight">SwipeCat</h1>
+          </div>
           {activeLabels.length > 0 && (
             <Link
               to="/categories"
