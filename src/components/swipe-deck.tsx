@@ -93,7 +93,7 @@ export function SwipeCard({
         <img
           src={product.image}
           alt={product.title}
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-contain p-4"
           draggable={false}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
