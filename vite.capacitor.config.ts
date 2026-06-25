@@ -99,7 +99,7 @@ export default defineConfig(({ mode }) => {
         env.VITE_SUPABASE_URL || "https://sqwjprhcophxlmmygwsk.supabase.co"
       ),
       "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(
-        env.VITE_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_wtBSh07eBdQJc76Bb5gBrw_gUwTa2y3"
+        env.VITE_SUPABASE_PUBLISHABLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxd2pwcmhjb3BoeGxtbXlnd3NrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMTcyMDcsImV4cCI6MjA5Nzc5MzIwN30.YjI5XNSF5DZGQvwwX6t9VAhyV3sjCegnvu1urD0pJnY"
       ),
       "import.meta.env.VITE_RAINFOREST_API_KEY": JSON.stringify(
         env.VITE_RAINFOREST_API_KEY || env.RAINFOREST_API_KEY || "A132B8365C774BE2A635294AD7362431"
