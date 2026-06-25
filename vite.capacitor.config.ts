@@ -96,10 +96,13 @@ export default defineConfig(({ mode }) => {
     // the builder's machine (e.g. after git pull removed .env from tracking).
     define: {
       "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(
-        env.VITE_SUPABASE_URL || "https://mazdacdhptwvadmdddeh.supabase.co"
+        env.VITE_SUPABASE_URL || "https://sqwjprhcophxlmmygwsk.supabase.co"
       ),
       "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(
         env.VITE_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_wtBSh07eBdQJc76Bb5gBrw_gUwTa2y3"
+      ),
+      "import.meta.env.VITE_RAINFOREST_API_KEY": JSON.stringify(
+        env.VITE_RAINFOREST_API_KEY || env.RAINFOREST_API_KEY || "A132B8365C774BE2A635294AD7362431"
       ),
       // Stub process.env so the Supabase client's SSR fallback path
       // (process.env.SUPABASE_URL) never throws 'process is not defined'

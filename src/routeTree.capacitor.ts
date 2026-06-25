@@ -6,12 +6,19 @@
  * add them here too.
  */
 import { Route as rootRouteImport } from './routes/__root.capacitor'
+import { Route as AdminRouteImport } from './routes/admin.capacitor'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as LikedRouteImport } from './routes/liked'
 import { Route as CategoriesRouteImport } from './routes/categories'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
+
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
@@ -52,6 +59,7 @@ const ProductIdRoute = ProductIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/admin': typeof AdminRoute
   '/categories': typeof CategoriesRoute
   '/liked': typeof LikedRoute
   '/privacy': typeof PrivacyRoute
@@ -61,6 +69,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/admin': typeof AdminRoute
   '/categories': typeof CategoriesRoute
   '/liked': typeof LikedRoute
   '/privacy': typeof PrivacyRoute
@@ -71,6 +80,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/admin': typeof AdminRoute
   '/categories': typeof CategoriesRoute
   '/liked': typeof LikedRoute
   '/privacy': typeof PrivacyRoute
@@ -82,6 +92,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/admin'
     | '/categories'
     | '/liked'
     | '/privacy'
@@ -90,6 +101,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/admin'
     | '/categories'
     | '/liked'
     | '/privacy'
@@ -98,6 +110,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/about'
+    | '/admin'
     | '/categories'
     | '/liked'
     | '/privacy'
@@ -108,6 +121,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  AdminRoute: typeof AdminRoute
   CategoriesRoute: typeof CategoriesRoute
   LikedRoute: typeof LikedRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -117,6 +131,7 @@ export interface RootRouteChildren {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  AdminRoute: AdminRoute,
   CategoriesRoute: CategoriesRoute,
   LikedRoute: LikedRoute,
   PrivacyRoute: PrivacyRoute,
