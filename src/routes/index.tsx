@@ -105,7 +105,7 @@ function Discover() {
   };
 
   return (
-    <div className="flex h-[100dvh] flex-col bg-background">
+    <div className="flex h-[100dvh] flex-col bg-background overflow-hidden touch-none" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
       <header
         className="px-5 pb-2"
         style={{ paddingTop: "max(1.25rem, env(safe-area-inset-top))" }}

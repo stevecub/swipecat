@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Bookmark, Heart, ExternalLink } from "lucide-react";
+import { ArrowLeft, Heart, ExternalLink } from "lucide-react";
 import { buildBuyUrl, getProduct, type Product } from "@/lib/products";
 import { useProductLists } from "@/hooks/use-product-lists";
 
@@ -26,7 +26,7 @@ function ProductDetail() {
   const { id } = Route.useParams();
   const router = useRouter();
   const [product, setProduct] = useState<Product | undefined>();
-  const { lists, like, save } = useProductLists();
+  const { lists, like } = useProductLists();
 
   useEffect(() => {
     getProduct(id).then(setProduct);
@@ -37,7 +37,6 @@ function ProductDetail() {
   }
 
   const isLiked = lists.liked.includes(product.id);
-  const isSaved = lists.saved.includes(product.id);
   const buyUrl = buildBuyUrl(product);
 
   return (
@@ -63,26 +62,16 @@ function ProductDetail() {
         </div>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{product.description}</p>
 
-        <div className="mt-6 grid grid-cols-2 gap-3">
+        <div className="mt-6">
           <button
             onClick={() => like(product.id)}
-            className={`flex items-center justify-center gap-2 rounded-full py-3 text-sm font-semibold ring-1 transition ${
+            className={`flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-semibold ring-1 transition ${
               isLiked
                 ? "bg-[var(--color-like)] text-white ring-transparent"
                 : "bg-card text-foreground ring-border"
             }`}
           >
             <Heart className={`h-4 w-4 ${isLiked ? "fill-white" : ""}`} /> {isLiked ? "Liked" : "Like"}
-          </button>
-          <button
-            onClick={() => save(product.id)}
-            className={`flex items-center justify-center gap-2 rounded-full py-3 text-sm font-semibold ring-1 transition ${
-              isSaved
-                ? "bg-[var(--color-save)] text-white ring-transparent"
-                : "bg-card text-foreground ring-border"
-            }`}
-          >
-            <Bookmark className={`h-4 w-4 ${isSaved ? "fill-white" : ""}`} /> {isSaved ? "Saved" : "Save"}
           </button>
         </div>
 
