@@ -137,7 +137,11 @@ export function SwipeCard({
               <p className="mt-1 line-clamp-2 text-xs text-white/85">{product.description}</p>
             </div>
             <div className="shrink-0 text-right">
-              <div className="text-lg font-black">{product.price != null ? `$${product.price}` : ""}</div>
+              <div className="text-lg font-black">
+                {product.price != null
+                  ? `$${Number(product.price).toFixed(2)}`
+                  : <span className="text-sm font-medium text-white/60">Price on Amazon</span>}
+              </div>
             </div>
           </div>
           {isTop && (

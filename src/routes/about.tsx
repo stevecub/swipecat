@@ -61,7 +61,7 @@ function AboutPage() {
         <section>
           <h2 className="text-lg font-bold">No account required</h2>
           <p className="mt-2">
-            SwipeCat doesn't ask you to sign up. Your liked and saved items live only on your
+            SwipeCat doesn't ask you to sign up. Your liked items live only on your
             device. See our{" "}
             <Link to="/privacy" className="underline">
               Privacy Policy
@@ -73,11 +73,7 @@ function AboutPage() {
         <section>
           <h2 className="text-lg font-bold">Support</h2>
           <p className="mt-2">
-            Bug? Suggestion? Email{" "}
-            <a className="underline" href="mailto:stevecubberly@gmail.com">
-              stevecubberly@gmail.com
-            </a>
-            .
+            Have a bug report or suggestion? We'd love to hear from you — reach out through the App Store review page.
           </p>
         </section>
 
