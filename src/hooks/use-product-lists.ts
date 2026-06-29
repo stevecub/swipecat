@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { nativeGet, nativeSet } from "@/lib/native-storage";
 
 type Lists = {
   liked: string[];
@@ -7,37 +8,62 @@ type Lists = {
 
 const KEY = "swipeshop:lists:v2";
 
-function load(): Lists {
-  if (typeof window === "undefined") return { liked: [], passed: [] };
-  try {
-    const raw = window.localStorage.getItem(KEY);
-    if (!raw) return { liked: [], passed: [] };
-    const parsed = JSON.parse(raw) as Partial<Lists>;
-    return { liked: parsed.liked ?? [], passed: parsed.passed ?? [] };
-  } catch {
-    return { liked: [], passed: [] };
-  }
-}
-
-function persist(lists: Lists) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(KEY, JSON.stringify(lists));
-}
-
+/**
+ * Manages the liked/passed product lists with native persistent storage.
+ *
+ * On iOS, data is stored in native UserDefaults via @capacitor/preferences,
+ * ensuring it survives app restarts and WKWebView storage pressure.
+ * On web, falls back to localStorage.
+ */
 export function useProductLists() {
   const [lists, setLists] = useState<Lists>({ liked: [], passed: [] });
+  const [loaded, setLoaded] = useState(false);
+  const persistQueue = useRef<Lists | null>(null);
+  const persisting = useRef(false);
 
+  // Load from native storage on mount
   useEffect(() => {
-    setLists(load());
-  }, []);
-
-  const update = useCallback((updater: (prev: Lists) => Lists) => {
-    setLists((prev) => {
-      const next = updater(prev);
-      persist(next);
-      return next;
+    nativeGet(KEY).then((raw) => {
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw) as Partial<Lists>;
+          setLists({ liked: parsed.liked ?? [], passed: parsed.passed ?? [] });
+        } catch {
+          // corrupted data — start fresh
+        }
+      }
+      setLoaded(true);
     });
   }, []);
+
+  // Persist helper — queues writes to avoid race conditions with async storage
+  const persist = useCallback((data: Lists) => {
+    persistQueue.current = data;
+    if (persisting.current) return;
+    persisting.current = true;
+
+    const flush = async () => {
+      while (persistQueue.current !== null) {
+        const toWrite = persistQueue.current;
+        persistQueue.current = null;
+        await nativeSet(KEY, JSON.stringify(toWrite));
+      }
+      persisting.current = false;
+    };
+
+    void flush();
+  }, []);
+
+  const update = useCallback(
+    (updater: (prev: Lists) => Lists) => {
+      setLists((prev) => {
+        const next = updater(prev);
+        persist(next);
+        return next;
+      });
+    },
+    [persist],
+  );
 
   const like = useCallback(
     (id: string) =>
@@ -66,5 +92,5 @@ export function useProductLists() {
     [update],
   );
 
-  return { lists, like, pass, remove };
+  return { lists, like, pass, remove, loaded };
 }

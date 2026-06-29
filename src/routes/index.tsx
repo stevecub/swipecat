@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { SwipeDeck } from "@/components/swipe-deck";
 import { SwipeHints } from "@/components/swipe-hints";
+import { SwipeCounters } from "@/components/swipe-counters";
 import { BottomNav } from "@/components/bottom-nav";
 import { getProducts, type Product } from "@/lib/products";
 import { useProductLists } from "@/hooks/use-product-lists";
@@ -16,7 +17,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Swipe through hand-picked products. Right to like, left to pass, up to save for later.",
+          "Swipe through hand-picked products. Right to like, left to pass.",
       },
       { property: "og:title", content: "SwipeCat — Discover products you'll love" },
       {
@@ -161,6 +162,11 @@ function Discover() {
             </div>
           ) : null}
           <SwipeHints swipeCount={swipeCount} />
+          {/* Persistent like/pass counters — left for likes, right for passes */}
+          <SwipeCounters
+            likeCount={lists.liked.length}
+            passCount={lists.passed.length}
+          />
         </div>
       </main>
 
