@@ -7,6 +7,7 @@ import { BottomNav } from "@/components/bottom-nav";
 import { OfflineBanner } from "@/components/offline-banner";
 import { OfflineState } from "@/components/offline-state";
 import { getProducts, type Product } from "@/lib/products";
+import { cacheProducts } from "@/lib/product-cache";
 import { useProductLists } from "@/hooks/use-product-lists";
 import { useCategories } from "@/hooks/use-categories";
 import { useSeen } from "@/hooks/use-seen";
@@ -128,6 +129,9 @@ function Discover() {
   }, [filtered.length, products.length]);
 
   const handleAction = (product: Product, action: "like" | "pass") => {
+    // Cache the full product data locally so Liked/Passed pages can
+    // display it without needing a Supabase fetch
+    cacheProducts(product);
     if (action === "like") like(product.id);
     else pass(product.id);
     setSwipeCount((prev) => prev + 1);

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BottomNav } from "@/components/bottom-nav";
 import { OfflineBanner } from "@/components/offline-banner";
 import { buildBuyUrl, getProducts, type Product } from "@/lib/products";
+import { getCachedProducts } from "@/lib/product-cache";
 import { useProductLists } from "@/hooks/use-product-lists";
 import { useNetwork } from "@/hooks/use-network";
 
@@ -21,18 +22,34 @@ export const Route = createFileRoute("/passed")({
 });
 
 function Passed() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [remoteProducts, setRemoteProducts] = useState<Product[]>([]);
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
   const { lists, remove, clearPassed } = useProductLists();
   const { isOnline } = useNetwork();
 
+  // Try to fetch from Supabase (for any items not in local cache)
   useEffect(() => {
-    getProducts().then(setProducts);
+    getProducts().then(setRemoteProducts).catch(() => {});
   }, []);
 
-  const items = lists.passed
-    .map((id) => products.find((p) => p.id === id))
-    .filter((p): p is Product => Boolean(p));
+  // Build the items list using local cache first, then remote as fallback.
+  // This ensures items display even offline or when Supabase doesn't return them.
+  const items: Product[] = (() => {
+    const cached = getCachedProducts(lists.passed);
+    const result: Product[] = [];
+    for (let i = 0; i < lists.passed.length; i++) {
+      const id = lists.passed[i];
+      // Try cache first
+      if (cached[i]) {
+        result.push(cached[i]!);
+      } else {
+        // Fallback to remote fetch
+        const remote = remoteProducts.find((p) => p.id === id);
+        if (remote) result.push(remote);
+      }
+    }
+    return result;
+  })();
 
   const handleClearAll = () => {
     setConfirmClearOpen(false);
@@ -111,7 +128,9 @@ function Passed() {
                       <h3 className="line-clamp-2 text-[11px] font-medium leading-tight">
                         {p.title}
                       </h3>
-                      <p className="mt-1 text-xs font-bold">${p.price}</p>
+                      <p className="mt-1 text-xs font-bold">
+                        {p.price != null ? `$${p.price}` : "View price"}
+                      </p>
                     </div>
                   </a>
                   <button
