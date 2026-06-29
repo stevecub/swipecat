@@ -65,7 +65,7 @@ export function SwipeCounters({
 
   return (
     <div className="flex w-full items-center justify-between">
-      {/* Like counter — LEFT */}
+      {/* Like counter — LEFT: menu opens rightward (left-aligned) */}
       <Counter
         count={likeCount}
         icon={<Heart className="h-3.5 w-3.5 fill-current" />}
@@ -75,6 +75,7 @@ export function SwipeCounters({
         onShare={handleShareLiked}
         onClear={onClearLiked}
         clearLabel="Clear all liked items"
+        menuAlign="left"
       />
 
       {/* Branding — CENTER */}
@@ -82,7 +83,7 @@ export function SwipeCounters({
         {brandingSlot}
       </div>
 
-      {/* Pass counter — RIGHT */}
+      {/* Pass counter — RIGHT: menu opens leftward (right-aligned) */}
       <Counter
         count={passCount}
         icon={<X className="h-3.5 w-3.5" strokeWidth={3} />}
@@ -92,6 +93,7 @@ export function SwipeCounters({
         onShare={handleSharePassed}
         onClear={onClearPassed}
         clearLabel="Clear all passed items"
+        menuAlign="right"
       />
     </div>
   );
@@ -106,6 +108,7 @@ function Counter({
   onShare,
   onClear,
   clearLabel,
+  menuAlign = "left",
 }: {
   count: number;
   icon: React.ReactNode;
@@ -115,6 +118,9 @@ function Counter({
   onShare: () => void;
   onClear: () => void;
   clearLabel: string;
+  /** "left" = menu anchors to left edge of button (opens rightward, for left-side counter)
+   *  "right" = menu anchors to right edge of button (opens leftward, for right-side counter) */
+  menuAlign?: "left" | "right";
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -133,6 +139,12 @@ function Counter({
     setMenuOpen(false);
     onShare();
   };
+
+  // Position the dropdown: left-aligned for left counter, right-aligned for right counter
+  const menuPositionStyle =
+    menuAlign === "right"
+      ? { right: 0 }        // anchors to right edge → opens leftward
+      : { left: 0 };        // anchors to left edge → opens rightward
 
   return (
     <div className="relative">
@@ -174,7 +186,7 @@ function Counter({
               exit={{ opacity: 0, scale: 0.85, y: -4 }}
               transition={{ duration: 0.15 }}
               className="absolute top-full mt-2 z-50 min-w-[140px] rounded-xl bg-white shadow-xl border border-gray-200 overflow-hidden"
-              style={{ left: "50%", transform: "translateX(-50%)" }}
+              style={menuPositionStyle}
             >
               <button
                 type="button"
