@@ -25,13 +25,20 @@ const MESSAGES = [
   "Something new is waiting! ✨ Swipe right on your next favorite.",
 ];
 
-/** Check if the user has enabled daily notifications */
+/**
+ * Check if the user has enabled daily notifications.
+ * Defaults to TRUE if no preference has been set yet (first launch).
+ * The user can explicitly turn it off from the Categories page.
+ */
 export function isDailyNotifEnabled(): boolean {
   if (typeof window === "undefined") return false;
   try {
-    return window.localStorage.getItem(PREF_KEY) === "true";
+    const val = window.localStorage.getItem(PREF_KEY);
+    // No preference saved yet = first launch = default ON
+    if (val === null) return true;
+    return val === "true";
   } catch {
-    return false;
+    return true;
   }
 }
 
@@ -135,13 +142,15 @@ async function cancelDailyNotification() {
 
 /**
  * Initialize notifications on app startup.
- * If the user previously enabled daily notifications, re-schedule them
- * (iOS clears scheduled notifications on app update, so we re-register).
+ * - On first launch (no preference saved): automatically requests permission
+ *   and schedules daily notifications (default ON behavior).
+ * - On subsequent launches: re-schedules if user hasn't turned them off
+ *   (iOS clears scheduled notifications on app update).
  */
 export async function initDailyNotifications(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
   if (!isDailyNotifEnabled()) return;
 
-  // Re-schedule to ensure it's active after app updates
+  // Enable (and request permission on first launch)
   await enableDailyNotifications();
 }
