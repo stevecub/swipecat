@@ -1,46 +1,46 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Heart, Trash2 } from "lucide-react";
+import { X, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BottomNav } from "@/components/bottom-nav";
 import { buildBuyUrl, getProducts, type Product } from "@/lib/products";
 import { useProductLists } from "@/hooks/use-product-lists";
 
-export const Route = createFileRoute("/liked")({
+export const Route = createFileRoute("/passed")({
   head: () => ({
     meta: [
-      { title: "Liked — SwipeCat" },
-      { name: "description", content: "Products you liked while swiping." },
-      { property: "og:title", content: "Liked — SwipeCat" },
-      { property: "og:description", content: "Your liked products in one place." },
+      { title: "Passed — SwipeCat" },
+      { name: "description", content: "Products you passed on while swiping." },
+      { property: "og:title", content: "Passed — SwipeCat" },
+      { property: "og:description", content: "Your passed products in one place." },
     ],
   }),
-  component: Liked,
+  component: Passed,
 });
 
-function Liked() {
+function Passed() {
   const [products, setProducts] = useState<Product[]>([]);
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
-  const { lists, remove, clearLiked } = useProductLists();
+  const { lists, remove, clearPassed } = useProductLists();
 
   useEffect(() => {
     getProducts().then(setProducts);
   }, []);
 
-  const items = lists.liked
+  const items = lists.passed
     .map((id) => products.find((p) => p.id === id))
     .filter((p): p is Product => Boolean(p));
 
   const handleClearAll = () => {
     setConfirmClearOpen(false);
-    clearLiked();
+    clearPassed();
   };
 
   return (
     <div className="flex h-[100dvh] flex-col bg-background">
       <header className="px-5 pt-5 pb-3">
         <div className="flex items-baseline justify-between">
-          <h1 className="text-2xl font-black tracking-tight">Liked</h1>
+          <h1 className="text-2xl font-black tracking-tight">Passed</h1>
           <div className="flex items-center gap-3">
             {items.length > 0 && (
               <button
@@ -63,9 +63,9 @@ function Liked() {
       <main className="flex-1 overflow-y-auto px-4 pb-28">
         {items.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-            <Heart className="h-10 w-10 text-muted-foreground" />
+            <X className="h-10 w-10 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
-              No likes yet. Swipe right on products you love.
+              No passed items yet. Swipe left on products to pass.
             </p>
             <Link
               to="/"
@@ -111,7 +111,7 @@ function Liked() {
                     </div>
                   </a>
                   <button
-                    aria-label="Remove from liked"
+                    aria-label="Remove from passed"
                     onClick={() => remove(p.id)}
                     className="absolute right-1.5 top-1.5 rounded-full bg-black/60 p-1 text-white opacity-90 transition hover:bg-black/80"
                   >
@@ -140,7 +140,7 @@ function Liked() {
               className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-[280px] rounded-2xl bg-white p-5 shadow-2xl text-center"
             >
               <h3 className="text-base font-bold text-gray-900 mb-1">
-                Clear all liked items?
+                Clear all passed items?
               </h3>
               <p className="text-sm text-gray-500 mb-4">
                 This can't be undone.

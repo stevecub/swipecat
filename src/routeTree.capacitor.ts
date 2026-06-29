@@ -9,6 +9,7 @@ import { Route as rootRouteImport } from './routes/__root.capacitor'
 import { Route as AdminRouteImport } from './routes/admin.capacitor'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as LikedRouteImport } from './routes/liked'
+import { Route as PassedRouteImport } from './routes/passed'
 import { Route as CategoriesRouteImport } from './routes/categories'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
@@ -29,6 +30,12 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const LikedRoute = LikedRouteImport.update({
   id: '/liked',
   path: '/liked',
+  getParentRoute: () => rootRouteImport,
+} as any)
+
+const PassedRoute = PassedRouteImport.update({
+  id: '/passed',
+  path: '/passed',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -62,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/categories': typeof CategoriesRoute
   '/liked': typeof LikedRoute
+  '/passed': typeof PassedRoute
   '/privacy': typeof PrivacyRoute
   '/product/$id': typeof ProductIdRoute
 }
@@ -72,6 +80,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/categories': typeof CategoriesRoute
   '/liked': typeof LikedRoute
+  '/passed': typeof PassedRoute
   '/privacy': typeof PrivacyRoute
   '/product/$id': typeof ProductIdRoute
 }
@@ -83,6 +92,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/categories': typeof CategoriesRoute
   '/liked': typeof LikedRoute
+  '/passed': typeof PassedRoute
   '/privacy': typeof PrivacyRoute
   '/product/$id': typeof ProductIdRoute
 }
@@ -95,6 +105,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/categories'
     | '/liked'
+    | '/passed'
     | '/privacy'
     | '/product/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/categories'
     | '/liked'
+    | '/passed'
     | '/privacy'
     | '/product/$id'
   id:
@@ -113,6 +125,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/categories'
     | '/liked'
+    | '/passed'
     | '/privacy'
     | '/product/$id'
   fileRoutesById: FileRoutesById
@@ -124,6 +137,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   CategoriesRoute: typeof CategoriesRoute
   LikedRoute: typeof LikedRoute
+  PassedRoute: typeof PassedRoute
   PrivacyRoute: typeof PrivacyRoute
   ProductIdRoute: typeof ProductIdRoute
 }
@@ -134,6 +148,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   CategoriesRoute: CategoriesRoute,
   LikedRoute: LikedRoute,
+  PassedRoute: PassedRoute,
   PrivacyRoute: PrivacyRoute,
   ProductIdRoute: ProductIdRoute,
 }

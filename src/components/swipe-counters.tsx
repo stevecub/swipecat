@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, X, Share2, Trash2 } from "lucide-react";
+import { Heart, X, Share2, Trash2, List } from "lucide-react";
 import { Share } from "@capacitor/share";
 
 /** App Store URL for SwipeCat */
@@ -32,7 +33,7 @@ async function triggerShare(text: string, title: string) {
 
 /**
  * Displays persistent like/pass counters in the header row.
- * Tapping a counter opens a small menu with Share and Clear All options.
+ * Tapping a counter opens a small menu with View All, Share, and Clear All options.
  */
 export function SwipeCounters({
   likeCount,
@@ -47,6 +48,8 @@ export function SwipeCounters({
   onClearLiked: () => void;
   onClearPassed: () => void;
 }) {
+  const navigate = useNavigate();
+
   const handleShareLiked = () => {
     const text =
       likeCount === 0
@@ -74,6 +77,7 @@ export function SwipeCounters({
         label="Liked"
         onShare={handleShareLiked}
         onClear={onClearLiked}
+        onViewAll={() => navigate({ to: "/liked" })}
         clearLabel="Clear all liked items"
         menuAlign="left"
       />
@@ -92,6 +96,7 @@ export function SwipeCounters({
         label="Passed"
         onShare={handleSharePassed}
         onClear={onClearPassed}
+        onViewAll={() => navigate({ to: "/passed" })}
         clearLabel="Clear all passed items"
         menuAlign="right"
       />
@@ -107,6 +112,7 @@ function Counter({
   label,
   onShare,
   onClear,
+  onViewAll,
   clearLabel,
   menuAlign = "left",
 }: {
@@ -117,6 +123,7 @@ function Counter({
   label: string;
   onShare: () => void;
   onClear: () => void;
+  onViewAll: () => void;
   clearLabel: string;
   /** "left" = menu anchors to left edge of button (opens rightward, for left-side counter)
    *  "right" = menu anchors to right edge of button (opens leftward, for right-side counter) */
@@ -138,6 +145,11 @@ function Counter({
   const handleShare = () => {
     setMenuOpen(false);
     onShare();
+  };
+
+  const handleViewAll = () => {
+    setMenuOpen(false);
+    onViewAll();
   };
 
   // Position the dropdown: left-aligned for left counter, right-aligned for right counter
@@ -188,6 +200,15 @@ function Counter({
               className="absolute top-full mt-2 z-50 min-w-[140px] rounded-xl bg-white shadow-xl border border-gray-200 overflow-hidden"
               style={menuPositionStyle}
             >
+              <button
+                type="button"
+                onClick={handleViewAll}
+                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+              >
+                <List className="h-4 w-4 text-gray-500" />
+                View All
+              </button>
+              <div className="h-px bg-gray-100" />
               <button
                 type="button"
                 onClick={handleShare}
