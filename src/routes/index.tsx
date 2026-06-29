@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { SwipeDeck } from "@/components/swipe-deck";
 import { SwipeHints } from "@/components/swipe-hints";
@@ -8,7 +8,6 @@ import { getProducts, type Product } from "@/lib/products";
 import { useProductLists } from "@/hooks/use-product-lists";
 import { useCategories } from "@/hooks/use-categories";
 import { productMatchesCategories, CATEGORIES } from "@/lib/categories";
-import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -111,37 +110,24 @@ function Discover() {
         className="px-5 pb-2"
         style={{ paddingTop: "max(1.25rem, env(safe-area-inset-top))" }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-          {/* Like counter - LEFT */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-            <div style={{ background: '#dcfce7', color: '#16a34a', borderRadius: 999, padding: '4px 10px', fontWeight: 700, fontSize: 13 }}>
-              ❤️ {lists.liked.length}
+        <SwipeCounters
+          likeCount={lists.liked.length}
+          passCount={lists.passed.length}
+          brandingSlot={
+            <div className="flex items-center gap-2">
+              <img
+                src="/icon-192.png"
+                alt=""
+                aria-hidden="true"
+                className="h-8 w-8 rounded-xl object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
+              />
+              <h1 className="text-xl font-black tracking-tight">SwipeCat</h1>
             </div>
-            <span style={{ fontSize: 10, color: '#888' }}>Liked</span>
-          </div>
-
-          {/* Branding - CENTER */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <img
-              src="/icon-192.png"
-              alt=""
-              aria-hidden="true"
-              className="h-8 w-8 rounded-xl object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = "none";
-              }}
-            />
-            <h1 className="text-xl font-black tracking-tight">SwipeCat</h1>
-          </div>
-
-          {/* Pass counter - RIGHT */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-            <div style={{ background: '#fee2e2', color: '#dc2626', borderRadius: 999, padding: '4px 10px', fontWeight: 700, fontSize: 13 }}>
-              ✕ {lists.passed.length}
-            </div>
-            <span style={{ fontSize: 10, color: '#888' }}>Passed</span>
-          </div>
-        </div>
+          }
+        />
         <p className="mt-1 text-[10px] leading-tight text-muted-foreground">
           As an Amazon Associate we earn from qualifying purchases.{" "}
           <Link to="/about" className="underline">

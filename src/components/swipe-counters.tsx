@@ -1,5 +1,37 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, X } from "lucide-react";
+import { Share } from "@capacitor/share";
+
+/** App Store URL for SwipeCat */
+const APP_STORE_URL = "https://apps.apple.com/app/swipecat/id6783462851";
+
+/**
+ * Triggers the native iOS Share Sheet.
+ * Falls back gracefully to the Web Share API (for browser/dev mode),
+ * and silently ignores errors if the user cancels the share dialog.
+ */
+async function triggerShare(text: string, title: string) {
+  try {
+    // Capacitor Share — uses native UIActivityViewController on iOS
+    await Share.share({
+      title,
+      text,
+      url: APP_STORE_URL,
+      dialogTitle: title,
+    });
+  } catch (err: any) {
+    // "Share canceled" is not a real error — ignore it
+    if (err?.message?.toLowerCase().includes("cancel")) return;
+    // Fallback: Web Share API (works in browser / dev mode)
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, text: `${text}\n${APP_STORE_URL}` });
+      } catch {
+        // User cancelled — ignore
+      }
+    }
+  }
+}
 
 /**
  * Displays persistent like/pass counters in the header row.
@@ -7,10 +39,10 @@ import { Heart, X } from "lucide-react";
  * Renders a three-column layout:
  *   [Like counter]  [SwipeCat branding]  [Pass counter]
  *
- * - Like counter on the LEFT (swipe right = like)
+ * - Like counter on the LEFT  (swipe right = like)
  * - Pass counter on the RIGHT (swipe left = pass)
  *
- * Counters animate with a spring pulse when incremented.
+ * Tapping either counter opens the native iOS Share Sheet.
  */
 export function SwipeCounters({
   likeCount,
@@ -21,6 +53,22 @@ export function SwipeCounters({
   passCount: number;
   brandingSlot: React.ReactNode;
 }) {
+  const handleShareLiked = () => {
+    const text =
+      likeCount === 0
+        ? "I just started discovering products on SwipeCat! 🐱 Download it and find things you'll love."
+        : `I've liked ${likeCount} product${likeCount === 1 ? "" : "s"} on SwipeCat! 🐱 Discover products you'll love — download SwipeCat:`;
+    triggerShare(text, "Share SwipeCat");
+  };
+
+  const handleSharePassed = () => {
+    const text =
+      passCount === 0
+        ? "I just started swiping on SwipeCat! 🐱 Download it and find things you'll love."
+        : `I've passed on ${passCount} product${passCount === 1 ? "" : "s"} on SwipeCat! 🐱 Think you can beat my score? Download SwipeCat:`;
+    triggerShare(text, "Share SwipeCat");
+  };
+
   return (
     <div className="flex w-full items-center justify-between">
       {/* Like counter — LEFT */}
@@ -30,6 +78,7 @@ export function SwipeCounters({
         bgColor="#dcfce7"
         textColor="#16a34a"
         label="Liked"
+        onTap={handleShareLiked}
       />
 
       {/* Branding — CENTER */}
@@ -44,6 +93,7 @@ export function SwipeCounters({
         bgColor="#fee2e2"
         textColor="#dc2626"
         label="Passed"
+        onTap={handleSharePassed}
       />
     </div>
   );
@@ -55,15 +105,22 @@ function Counter({
   bgColor,
   textColor,
   label,
+  onTap,
 }: {
   count: number;
   icon: React.ReactNode;
   bgColor: string;
   textColor: string;
   label: string;
+  onTap: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center gap-0.5">
+    <button
+      type="button"
+      onClick={onTap}
+      className="flex flex-col items-center gap-0.5 active:opacity-70 transition-opacity"
+      aria-label={`${label}: ${count}. Tap to share.`}
+    >
       <AnimatePresence mode="popLayout">
         <motion.div
           key={count}
@@ -79,6 +136,6 @@ function Counter({
         </motion.div>
       </AnimatePresence>
       <span className="text-[9px] font-medium text-muted-foreground">{label}</span>
-    </div>
+    </button>
   );
 }
