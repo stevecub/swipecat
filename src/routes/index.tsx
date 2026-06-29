@@ -142,8 +142,8 @@ function Discover() {
         </p>
       </header>
 
-      <main className="relative flex-1 px-5 pb-28">
-        <div className="relative mx-auto aspect-[3/4.6] h-full max-h-[640px] w-full max-w-md">
+      <main className="relative flex-1 flex flex-col px-5 pb-2">
+        <div className="relative mx-auto aspect-[3/4.6] w-full max-w-md" style={{ maxHeight: 'calc(100% - 3rem)' }}>
           {filtered.length > 0 ? (
             <SwipeDeck products={filtered} onAction={handleAction} />
           ) : products.length > 0 ? (
@@ -162,7 +162,9 @@ function Discover() {
             </div>
           ) : null}
           <SwipeHints swipeCount={swipeCount} />
-          {/* Persistent like/pass counters — left for likes, right for passes */}
+        </div>
+        {/* Persistent like/pass counters — shown below the card, above the bottom nav */}
+        <div className="flex items-center justify-between px-2 py-2 mt-auto">
           <SwipeCounters
             likeCount={lists.liked.length}
             passCount={lists.passed.length}
