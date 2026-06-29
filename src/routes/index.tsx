@@ -111,29 +111,24 @@ function Discover() {
         className="px-5 pb-2"
         style={{ paddingTop: "max(1.25rem, env(safe-area-inset-top))" }}
       >
-        <div className="flex items-center justify-between">
-          {/* SwipeCat branding: cat icon + wordmark */}
-          <div className="flex items-center gap-2">
-            <img
-              src="/icon-192.png"
-              alt=""
-              aria-hidden="true"
-              className="h-8 w-8 rounded-xl object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = "none";
-              }}
-            />
-            <h1 className="text-xl font-black tracking-tight">SwipeCat</h1>
-          </div>
-          {activeLabels.length > 0 && (
-            <Link
-              to="/categories"
-              className="text-xs font-medium text-muted-foreground hover:text-foreground"
-            >
-              {activeLabels.length === 1 ? activeLabels[0] : `${activeLabels.length} categories`}
-            </Link>
-          )}
-        </div>
+        <SwipeCounters
+          likeCount={lists.liked.length}
+          passCount={lists.passed.length}
+          brandingSlot={
+            <>
+              <img
+                src="/icon-192.png"
+                alt=""
+                aria-hidden="true"
+                className="h-8 w-8 rounded-xl object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
+              />
+              <h1 className="text-xl font-black tracking-tight">SwipeCat</h1>
+            </>
+          }
+        />
         <p className="mt-1 text-[10px] leading-tight text-muted-foreground">
           As an Amazon Associate we earn from qualifying purchases.{" "}
           <Link to="/about" className="underline">
@@ -142,8 +137,8 @@ function Discover() {
         </p>
       </header>
 
-      <main className="relative flex-1 flex flex-col px-5 pb-2">
-        <div className="relative mx-auto aspect-[3/4.6] w-full max-w-md" style={{ maxHeight: 'calc(100% - 3rem)' }}>
+      <main className="relative flex-1 px-5 pb-28">
+        <div className="relative mx-auto aspect-[3/4.6] h-full max-h-[640px] w-full max-w-md">
           {filtered.length > 0 ? (
             <SwipeDeck products={filtered} onAction={handleAction} />
           ) : products.length > 0 ? (
@@ -162,13 +157,6 @@ function Discover() {
             </div>
           ) : null}
           <SwipeHints swipeCount={swipeCount} />
-        </div>
-        {/* Persistent like/pass counters — shown below the card, above the bottom nav */}
-        <div className="flex items-center justify-between px-2 py-2 mt-auto">
-          <SwipeCounters
-            likeCount={lists.liked.length}
-            passCount={lists.passed.length}
-          />
         </div>
       </main>
 
