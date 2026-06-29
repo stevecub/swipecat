@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
+import { OfflineBanner } from "@/components/offline-banner";
 import { DailyPicksToggle } from "@/components/daily-picks-toggle";
 import { CATEGORIES } from "@/lib/categories";
 import { useCategories } from "@/hooks/use-categories";
+import { useNetwork } from "@/hooks/use-network";
 
 export const Route = createFileRoute("/categories")({
   head: () => ({
@@ -19,10 +21,12 @@ export const Route = createFileRoute("/categories")({
 
 function Categories() {
   const { selected, toggle, clear } = useCategories();
+  const { isOnline } = useNetwork();
   const count = selected.length;
 
   return (
     <div className="flex h-[100dvh] flex-col bg-background">
+      <OfflineBanner visible={!isOnline} />
       <header className="px-5 pt-5 pb-3">
         <div className="flex items-baseline justify-between">
           <h1 className="text-2xl font-black tracking-tight">Categories</h1>

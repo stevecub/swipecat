@@ -1,13 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { SwipeDeck } from "@/components/swipe-deck";
 import { SwipeHints } from "@/components/swipe-hints";
 import { SwipeCounters } from "@/components/swipe-counters";
 import { BottomNav } from "@/components/bottom-nav";
+import { OfflineBanner } from "@/components/offline-banner";
+import { OfflineState } from "@/components/offline-state";
 import { getProducts, type Product } from "@/lib/products";
 import { useProductLists } from "@/hooks/use-product-lists";
 import { useCategories } from "@/hooks/use-categories";
 import { useSeen } from "@/hooks/use-seen";
+import { useNetwork } from "@/hooks/use-network";
 import { productMatchesCategories, CATEGORIES } from "@/lib/categories";
 
 export const Route = createFileRoute("/")({
@@ -52,35 +55,54 @@ const PREMARK_WINDOW = 3;
 function Discover() {
   const [products, setProducts] = useState<Product[]>([]);
   const [swipeCount, setSwipeCount] = useState(0);
+  const [loadFailed, setLoadFailed] = useState(false);
   const fetchingRef = useRef(false);
 
   const { lists, like, pass, clearLiked, clearPassed } = useProductLists();
   const { selected } = useCategories();
   const { seenSet, markSeen } = useSeen();
+  const { isOnline } = useNetwork();
 
   // Load products on mount
+  const loadProducts = useCallback(() => {
+    setLoadFailed(false);
+    getProducts()
+      .then((data) => {
+        if (data.length > 0) {
+          setProducts(data);
+          setLoadFailed(false);
+        } else if (products.length === 0) {
+          // Got empty result and we have nothing cached — likely offline
+          setLoadFailed(true);
+        }
+      })
+      .catch(() => {
+        if (products.length === 0) setLoadFailed(true);
+      });
+  }, [products.length]);
+
   useEffect(() => {
-    getProducts().then(setProducts);
+    loadProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Auto-retry when connection comes back and we have no products
+  useEffect(() => {
+    if (isOnline && (products.length === 0 || loadFailed)) {
+      loadProducts();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnline]);
 
   // Build a stable joined string of seen IDs so useMemo only re-runs when
   // the actual set of seen items changes, not on every render.
-  // seenSet is a ref-backed Set — we use liked+passed lengths as a proxy
-  // for "something changed" since seenSet mutations don't trigger re-renders.
   const seenKey = useMemo(
     () => [...lists.liked, ...lists.passed].sort().join(","),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [lists.liked.length, lists.passed.length],
   );
 
-  // Build the filtered queue:
-  //   1. Exclude items in the persistent seen set (covers all previously shown cards)
-  //   2. Exclude items in liked/passed lists (belt-and-suspenders)
-  //   3. Filter by selected categories
-  //   4. Shuffle so multiple categories are interleaved
-  //
-  // The shuffle runs once when the pool changes. The deck then advances through
-  // this stable ordered list via its internal index — no re-shuffle on re-render.
+  // Build the filtered queue
   const filtered = useMemo(() => {
     const excludeSet = new Set([...seenSet, ...lists.liked, ...lists.passed]);
     const base = products.filter(
@@ -90,9 +112,7 @@ function Discover() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [products, selected, seenKey]);
 
-  // Auto-refresh: when fewer than REFETCH_THRESHOLD unseen cards remain,
-  // silently fetch a fresh batch from Supabase and append any genuinely new
-  // products (ones not already in the local pool).
+  // Auto-refresh: when fewer than REFETCH_THRESHOLD unseen cards remain
   useEffect(() => {
     if (filtered.length < REFETCH_THRESHOLD && !fetchingRef.current && products.length > 0) {
       fetchingRef.current = true;
@@ -107,27 +127,25 @@ function Discover() {
     }
   }, [filtered.length, products.length]);
 
-  const activeLabels = selected
-    .map((id) => CATEGORIES.find((c) => c.id === id)?.label)
-    .filter(Boolean) as string[];
-
   const handleAction = (product: Product, action: "like" | "pass") => {
     if (action === "like") like(product.id);
     else pass(product.id);
     setSwipeCount((prev) => prev + 1);
   };
 
-  /**
-   * Called by SwipeDeck whenever the visible window of cards changes.
-   * We mark those IDs as seen immediately so that navigating away and back
-   * never re-shows a card that was already in the stack.
-   */
   const handleVisibleIds = (ids: string[]) => {
     markSeen(ids);
   };
 
+  // Determine if we should show the offline empty state:
+  // Only when we have NO products loaded AND we're offline (or load failed)
+  const showOfflineState = products.length === 0 && (!isOnline || loadFailed);
+
   return (
     <div className="flex h-[100dvh] flex-col bg-background overflow-hidden touch-none" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+      {/* Offline banner — slides in at the top when offline, even if we have cached content */}
+      <OfflineBanner visible={!isOnline} />
+
       <header
         className="px-5 pb-2"
         style={{ paddingTop: "max(1.25rem, env(safe-area-inset-top))" }}
@@ -162,7 +180,9 @@ function Discover() {
 
       <main className="relative flex-1 px-5 pb-28">
         <div className="relative mx-auto aspect-[3/4.6] h-full max-h-[640px] w-full max-w-md">
-          {filtered.length > 0 ? (
+          {showOfflineState ? (
+            <OfflineState onRetry={loadProducts} />
+          ) : filtered.length > 0 ? (
             <SwipeDeck
               products={filtered}
               onAction={handleAction}
@@ -184,7 +204,7 @@ function Discover() {
               </Link>
             </div>
           ) : null}
-          <SwipeHints swipeCount={swipeCount} />
+          {!showOfflineState && <SwipeHints swipeCount={swipeCount} />}
         </div>
       </main>
 

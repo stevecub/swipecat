@@ -3,8 +3,10 @@ import { useEffect, useState } from "react";
 import { X, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BottomNav } from "@/components/bottom-nav";
+import { OfflineBanner } from "@/components/offline-banner";
 import { buildBuyUrl, getProducts, type Product } from "@/lib/products";
 import { useProductLists } from "@/hooks/use-product-lists";
+import { useNetwork } from "@/hooks/use-network";
 
 export const Route = createFileRoute("/passed")({
   head: () => ({
@@ -22,6 +24,7 @@ function Passed() {
   const [products, setProducts] = useState<Product[]>([]);
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
   const { lists, remove, clearPassed } = useProductLists();
+  const { isOnline } = useNetwork();
 
   useEffect(() => {
     getProducts().then(setProducts);
@@ -38,6 +41,7 @@ function Passed() {
 
   return (
     <div className="flex h-[100dvh] flex-col bg-background">
+      <OfflineBanner visible={!isOnline} />
       <header className="px-5 pt-5 pb-3">
         <div className="flex items-baseline justify-between">
           <h1 className="text-2xl font-black tracking-tight">Passed</h1>
