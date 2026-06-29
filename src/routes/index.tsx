@@ -7,6 +7,7 @@ import { BottomNav } from "@/components/bottom-nav";
 import { getProducts, type Product } from "@/lib/products";
 import { useProductLists } from "@/hooks/use-product-lists";
 import { useCategories } from "@/hooks/use-categories";
+import { useSeen } from "@/hooks/use-seen";
 import { productMatchesCategories, CATEGORIES } from "@/lib/categories";
 
 export const Route = createFileRoute("/")({
@@ -41,6 +42,13 @@ function shuffle<T>(arr: T[]): T[] {
 /** Trigger a background refresh when this many unseen cards remain */
 const REFETCH_THRESHOLD = 20;
 
+/**
+ * How many cards ahead of the current position to pre-mark as "seen".
+ * Cards in the visible stack (top 3) are marked immediately so that if the
+ * user navigates away and back, those cards are already excluded.
+ */
+const PREMARK_WINDOW = 3;
+
 function Discover() {
   const [products, setProducts] = useState<Product[]>([]);
   const [swipeCount, setSwipeCount] = useState(0);
@@ -48,6 +56,7 @@ function Discover() {
 
   const { lists, like, pass, clearLiked, clearPassed } = useProductLists();
   const { selected } = useCategories();
+  const { seenSet, markSeen } = useSeen();
 
   // Load products on mount
   useEffect(() => {
@@ -56,23 +65,28 @@ function Discover() {
 
   // Build a stable joined string of seen IDs so useMemo only re-runs when
   // the actual set of seen items changes, not on every render.
+  // seenSet is a ref-backed Set — we use liked+passed lengths as a proxy
+  // for "something changed" since seenSet mutations don't trigger re-renders.
   const seenKey = useMemo(
     () => [...lists.liked, ...lists.passed].sort().join(","),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [lists.liked.length, lists.passed.length],
   );
 
-  // Filter by category AND exclude already-seen items, then shuffle so that
-  // when multiple categories are selected the results are interleaved randomly
-  // rather than appearing in database-insertion order (which groups by category).
+  // Build the filtered queue:
+  //   1. Exclude items in the persistent seen set (covers all previously shown cards)
+  //   2. Exclude items in liked/passed lists (belt-and-suspenders)
+  //   3. Filter by selected categories
+  //   4. Shuffle so multiple categories are interleaved
+  //
+  // The shuffle runs once when the pool changes. The deck then advances through
+  // this stable ordered list via its internal index — no re-shuffle on re-render.
   const filtered = useMemo(() => {
-    const seenSet = new Set([...lists.liked, ...lists.passed]);
+    const excludeSet = new Set([...seenSet, ...lists.liked, ...lists.passed]);
     const base = products.filter(
-      (p) => !seenSet.has(p.id) && productMatchesCategories(p.category, selected),
+      (p) => !excludeSet.has(p.id) && productMatchesCategories(p.category, selected),
     );
     return shuffle(base);
-    // Use seenKey (a stable string) instead of seenIds (a new Set object each time)
-    // so the shuffle only re-runs when the seen set actually changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [products, selected, seenKey]);
 
@@ -87,7 +101,6 @@ function Discover() {
           const existingIds = new Set(prev.map((p) => p.id));
           const newOnes = fresh.filter((p) => !existingIds.has(p.id));
           fetchingRef.current = false;
-          // Only update state if there are actually new products to add
           return newOnes.length > 0 ? [...prev, ...newOnes] : prev;
         });
       });
@@ -102,6 +115,15 @@ function Discover() {
     if (action === "like") like(product.id);
     else pass(product.id);
     setSwipeCount((prev) => prev + 1);
+  };
+
+  /**
+   * Called by SwipeDeck whenever the visible window of cards changes.
+   * We mark those IDs as seen immediately so that navigating away and back
+   * never re-shows a card that was already in the stack.
+   */
+  const handleVisibleIds = (ids: string[]) => {
+    markSeen(ids);
   };
 
   return (
@@ -141,7 +163,12 @@ function Discover() {
       <main className="relative flex-1 px-5 pb-28">
         <div className="relative mx-auto aspect-[3/4.6] h-full max-h-[640px] w-full max-w-md">
           {filtered.length > 0 ? (
-            <SwipeDeck products={filtered} onAction={handleAction} />
+            <SwipeDeck
+              products={filtered}
+              onAction={handleAction}
+              onVisibleIds={handleVisibleIds}
+              premarkWindow={PREMARK_WINDOW}
+            />
           ) : products.length > 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
               <div className="text-5xl">🗂️</div>

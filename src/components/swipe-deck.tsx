@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValue, useTransform } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { buildBuyUrl, type Product } from "@/lib/products";
@@ -158,12 +158,33 @@ export function SwipeCard({
 export function SwipeDeck({
   products,
   onAction,
+  onVisibleIds,
+  premarkWindow = 3,
 }: {
   products: Product[];
   onAction: (product: Product, action: Action) => void;
+  /**
+   * Called whenever the set of visible card IDs changes.
+   * The parent uses this to mark cards as "seen" in persistent storage,
+   * preventing them from re-appearing after navigation or app restart.
+   */
+  onVisibleIds?: (ids: string[]) => void;
+  /** How many upcoming cards to pre-mark as seen (default: 3). */
+  premarkWindow?: number;
 }) {
   const [index, setIndex] = useState(0);
-  const visible = useMemo(() => products.slice(index, index + 3), [products, index]);
+  const visible = useMemo(() => products.slice(index, index + premarkWindow), [products, index, premarkWindow]);
+
+  // Report visible IDs to parent whenever the window changes so they can be
+  // persisted immediately — before the user swipes or navigates away.
+  const prevVisibleKey = useRef<string>("");
+  useEffect(() => {
+    if (!onVisibleIds || visible.length === 0) return;
+    const key = visible.map((p) => p.id).join(",");
+    if (key === prevVisibleKey.current) return;
+    prevVisibleKey.current = key;
+    onVisibleIds(visible.map((p) => p.id));
+  }, [visible, onVisibleIds]);
 
   const handle = (action: Action) => {
     const current = products[index];
