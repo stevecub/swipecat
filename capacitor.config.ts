@@ -25,6 +25,10 @@ const config: CapacitorConfig = {
       style: "DARK",
       overlaysWebView: false,
     },
+    LocalNotifications: {
+      // iOS: show badge, play sound, and display as banner + in notification center
+      presentationOptions: ["badge", "sound", "banner", "list"],
+    },
   },
 };
 

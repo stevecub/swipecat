@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
+import { DailyPicksToggle } from "@/components/daily-picks-toggle";
 import { CATEGORIES } from "@/lib/categories";
 import { useCategories } from "@/hooks/use-categories";
 
@@ -68,6 +69,12 @@ function Categories() {
             );
           })}
         </ul>
+
+        {/* Notifications toggle */}
+        <div className="mt-6 pt-4 border-t border-border">
+          <h2 className="mb-3 text-sm font-bold text-foreground">Notifications</h2>
+          <DailyPicksToggle />
+        </div>
 
         <div className="mt-6 flex justify-center">
           <Link

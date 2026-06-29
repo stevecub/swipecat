@@ -16,6 +16,7 @@ import { RouterProvider, createRouter, createHashHistory } from "@tanstack/react
 import { SplashScreen } from "@capacitor/splash-screen";
 
 import "./styles.css";
+import { initDailyNotifications } from "./lib/daily-notifications";
 
 // Import the Capacitor-specific route tree (excludes /admin which uses server functions)
 import { routeTree } from "./routeTree.capacitor";
@@ -136,6 +137,9 @@ if (!rootElement) {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         hideSplash();
+        // Re-schedule daily notifications if user previously enabled them
+        // (iOS clears scheduled notifications on app update)
+        initDailyNotifications().catch(() => {});
       });
     });
   } catch (err: any) {
