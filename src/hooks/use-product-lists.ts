@@ -67,5 +67,15 @@ export function useProductLists() {
     [update],
   );
 
-  return { lists, like, pass, remove };
+  const clearLiked = useCallback(
+    () => update((p) => ({ ...p, liked: [] })),
+    [update],
+  );
+
+  const clearPassed = useCallback(
+    () => update((p) => ({ ...p, passed: [] })),
+    [update],
+  );
+
+  return { lists, like, pass, remove, clearLiked, clearPassed };
 }

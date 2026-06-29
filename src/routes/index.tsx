@@ -46,7 +46,7 @@ function Discover() {
   const [swipeCount, setSwipeCount] = useState(0);
   const fetchingRef = useRef(false);
 
-  const { lists, like, pass } = useProductLists();
+  const { lists, like, pass, clearLiked, clearPassed } = useProductLists();
   const { selected } = useCategories();
 
   // Load products on mount
@@ -113,6 +113,8 @@ function Discover() {
         <SwipeCounters
           likeCount={lists.liked.length}
           passCount={lists.passed.length}
+          onClearLiked={clearLiked}
+          onClearPassed={clearPassed}
           brandingSlot={
             <div className="flex items-center gap-2">
               <img
