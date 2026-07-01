@@ -82,11 +82,7 @@ function PrivacyPage() {
 
         <h2 className="mt-6 text-lg font-bold">Contact</h2>
         <p className="mt-2">
-          Questions? Email{" "}
-          <a className="underline" href="mailto:stevecubberly@gmail.com">
-            stevecubberly@gmail.com
-          </a>
-          .
+          For questions about this privacy policy, please contact us through the App Store.
         </p>
 
         <div className="mt-10 border-t border-border pt-4 text-xs text-muted-foreground">
