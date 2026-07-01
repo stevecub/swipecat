@@ -12,7 +12,7 @@ import { useProductLists } from "@/hooks/use-product-lists";
 import { useCategories } from "@/hooks/use-categories";
 import { useSeen } from "@/hooks/use-seen";
 import { useNetwork } from "@/hooks/use-network";
-import { productMatchesCategories, CATEGORIES } from "@/lib/categories";
+import { productMatchesCategories } from "@/lib/categories";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -43,18 +43,12 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-/** Trigger a background refresh when this many unseen cards remain */
+/** Trigger a background refresh when this many cards remain in the queue */
 const REFETCH_THRESHOLD = 20;
-
-/**
- * How many cards ahead of the current position to pre-mark as "seen".
- * Cards in the visible stack (top 3) are marked immediately so that if the
- * user navigates away and back, those cards are already excluded.
- */
 const PREMARK_WINDOW = 3;
 
 function Discover() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [rawProducts, setRawProducts] = useState<Product[]>([]);
   const [swipeCount, setSwipeCount] = useState(0);
   const [loadFailed, setLoadFailed] = useState(false);
   const fetchingRef = useRef(false);
@@ -64,23 +58,62 @@ function Discover() {
   const { seenSet, markSeen } = useSeen();
   const { isOnline } = useNetwork();
 
+  // ─── Stable queue ────────────────────────────────────────────────────────────
+  //
+  // THE ROOT CAUSE OF THE LOCKUP was that `filtered` was recomputed (and
+  // reshuffled) on every swipe because liked/passed IDs were in its dependency
+  // array. Each new array reference caused SwipeDeck to receive new `products`
+  // props, resetting its internal index to 0 and effectively restarting the deck.
+  //
+  // Fix: build the queue ONCE when rawProducts or selected categories change,
+  // then only APPEND new items when a background refresh brings fresh products.
+  // Liked/passed/seen items are excluded at queue-build time only — mid-session
+  // swipes do NOT trigger a rebuild.
+  //
+  // The deck itself calls onAction which removes the card from the top of the
+  // visible stack naturally via its own index counter.
+  //
+  const [queue, setQueue] = useState<Product[]>([]);
+  const queueBuiltRef = useRef(false);
+
+  // Snapshot of excluded IDs at the time the queue was built.
+  // We use a ref so the queue-build effect doesn't re-run when liked/passed change.
+  const excludeAtBuildRef = useRef<Set<string>>(new Set());
+
+  // Build (or rebuild) the queue when raw products or selected categories change.
+  // This does NOT depend on liked/passed/seen — those are captured once at build time.
+  useEffect(() => {
+    if (rawProducts.length === 0) return;
+
+    // Capture current exclusions at build time
+    const excludeSet = new Set([...seenSet, ...lists.liked, ...lists.passed]);
+    excludeAtBuildRef.current = excludeSet;
+
+    const base = rawProducts.filter(
+      (p) => !excludeSet.has(p.id) && productMatchesCategories(p.category, selected),
+    );
+    setQueue(shuffle(base));
+    queueBuiltRef.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawProducts, selected]);
+  // ─────────────────────────────────────────────────────────────────────────────
+
   // Load products on mount
   const loadProducts = useCallback(() => {
     setLoadFailed(false);
     getProducts()
       .then((data) => {
         if (data.length > 0) {
-          setProducts(data);
+          setRawProducts(data);
           setLoadFailed(false);
-        } else if (products.length === 0) {
-          // Got empty result and we have nothing cached — likely offline
+        } else {
           setLoadFailed(true);
         }
       })
       .catch(() => {
-        if (products.length === 0) setLoadFailed(true);
+        setLoadFailed(true);
       });
-  }, [products.length]);
+  }, []);
 
   useEffect(() => {
     loadProducts();
@@ -89,65 +122,62 @@ function Discover() {
 
   // Auto-retry when connection comes back and we have no products
   useEffect(() => {
-    if (isOnline && (products.length === 0 || loadFailed)) {
+    if (isOnline && (rawProducts.length === 0 || loadFailed)) {
       loadProducts();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOnline]);
 
-  // Build a stable joined string of seen IDs so useMemo only re-runs when
-  // the actual set of seen items changes, not on every render.
-  const seenKey = useMemo(
-    () => [...lists.liked, ...lists.passed].sort().join(","),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [lists.liked.length, lists.passed.length],
-  );
+  // Auto-refresh: when fewer than REFETCH_THRESHOLD cards remain in the queue,
+  // fetch fresh products and APPEND only genuinely new ones — no reshuffle.
+  const queueLengthRef = useRef(queue.length);
+  queueLengthRef.current = queue.length;
 
-  // Build the filtered queue
-  const filtered = useMemo(() => {
-    const excludeSet = new Set([...seenSet, ...lists.liked, ...lists.passed]);
-    const base = products.filter(
-      (p) => !excludeSet.has(p.id) && productMatchesCategories(p.category, selected),
-    );
-    return shuffle(base);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [products, selected, seenKey]);
-
-  // Auto-refresh: when fewer than REFETCH_THRESHOLD unseen cards remain
   useEffect(() => {
-    if (filtered.length < REFETCH_THRESHOLD && !fetchingRef.current && products.length > 0) {
+    if (queue.length < REFETCH_THRESHOLD && !fetchingRef.current && rawProducts.length > 0) {
       fetchingRef.current = true;
       getProducts().then((fresh) => {
-        setProducts((prev) => {
+        setRawProducts((prev) => {
           const existingIds = new Set(prev.map((p) => p.id));
           const newOnes = fresh.filter((p) => !existingIds.has(p.id));
           fetchingRef.current = false;
-          return newOnes.length > 0 ? [...prev, ...newOnes] : prev;
+          if (newOnes.length > 0) {
+            // Also append new items to the live queue directly so the deck
+            // doesn't need to rebuild — just gets more cards at the end.
+            const exclude = excludeAtBuildRef.current;
+            const toAdd = newOnes.filter(
+              (p) => !exclude.has(p.id) && productMatchesCategories(p.category, selected),
+            );
+            if (toAdd.length > 0) {
+              setQueue((q) => [...q, ...shuffle(toAdd)]);
+            }
+            return [...prev, ...newOnes];
+          }
+          return prev;
         });
       });
     }
-  }, [filtered.length, products.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queue.length]);
 
   const handleAction = (product: Product, action: "like" | "pass") => {
-    // Cache the full product data locally so Liked/Passed pages can
-    // display it without needing a Supabase fetch
     cacheProducts(product);
     if (action === "like") like(product.id);
     else pass(product.id);
     setSwipeCount((prev) => prev + 1);
+    // Also add to the build-time exclude set so if the queue ever rebuilds
+    // (e.g. category change) this item stays excluded
+    excludeAtBuildRef.current.add(product.id);
   };
 
   const handleVisibleIds = (ids: string[]) => {
     markSeen(ids);
   };
 
-  // Determine if we should show the offline empty state:
-  // Only when we have NO products loaded AND we're offline (or load failed)
-  const showOfflineState = products.length === 0 && (!isOnline || loadFailed);
+  const showOfflineState = rawProducts.length === 0 && (!isOnline || loadFailed);
 
   return (
     <div className="flex h-[100dvh] flex-col bg-background overflow-hidden touch-none" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
-      {/* Offline banner — slides in at the top when offline, even if we have cached content */}
       <OfflineBanner visible={!isOnline} />
 
       <header
@@ -186,14 +216,14 @@ function Discover() {
         <div className="relative mx-auto aspect-[3/4.6] h-full max-h-[640px] w-full max-w-md">
           {showOfflineState ? (
             <OfflineState onRetry={loadProducts} />
-          ) : filtered.length > 0 ? (
+          ) : queue.length > 0 ? (
             <SwipeDeck
-              products={filtered}
+              products={queue}
               onAction={handleAction}
               onVisibleIds={handleVisibleIds}
               premarkWindow={PREMARK_WINDOW}
             />
-          ) : products.length > 0 ? (
+          ) : rawProducts.length > 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
               <div className="text-5xl">🗂️</div>
               <h3 className="text-xl font-bold">No matches in this filter</h3>
