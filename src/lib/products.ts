@@ -78,17 +78,61 @@ function fromDb(r: DbProduct): Product {
 }
 
 
+// Category values that map to each app category id.
+// Must stay in sync with src/lib/categories.ts `matches` arrays.
+const CATEGORY_VALUES: string[] = [
+  "Women's Shoes",
+  "Electronics",
+  "Women's Fashion",
+  "Men's Fashion",
+  "Beauty & Skincare",
+  "Home Decor",
+  "Kitchen Gadgets",
+  "Fitness & Activewear",
+  "Jewelry & Accessories",
+  "Pet Supplies",
+];
+
+/**
+ * Fetches products balanced across all categories.
+ *
+ * The naive `ORDER BY created_at DESC LIMIT 500` caused a critical bug:
+ * products inserted earlier in a bulk load (e.g. Home Decor) would fall
+ * outside the 500-row window and never be returned, making that category
+ * appear empty even though it had hundreds of products in the database.
+ *
+ * Fix: fetch up to 50 products per category (500 total across 10 categories)
+ * ordered randomly so users see different products each session.
+ */
 export async function getProducts(): Promise<Product[]> {
-  const { data, error } = await supabase
-    .from("products")
-    .select("id, title, description, price, currency, image, category, asin, rating, review_count")
-    .order("created_at", { ascending: false })
-    .limit(500);
-  if (error) {
-    console.error("getProducts failed:", error.message);
-    return [];
+  const PER_CATEGORY = 50;
+
+  const results = await Promise.all(
+    CATEGORY_VALUES.map(async (cat) => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, title, description, price, currency, image, category, asin, rating, review_count")
+        .eq("category", cat)
+        .limit(PER_CATEGORY);
+      if (error) {
+        console.error(`getProducts [${cat}] failed:`, error.message);
+        return [] as DbProduct[];
+      }
+      return (data ?? []) as DbProduct[];
+    }),
+  );
+
+  // Flatten all category slices, convert, then shuffle so the deck isn't
+  // grouped by category when no filter is applied.
+  const all = results.flat().map(fromDb);
+
+  // Fisher-Yates shuffle
+  for (let i = all.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [all[i], all[j]] = [all[j], all[i]];
   }
-  return (data as DbProduct[]).map(fromDb);
+
+  return all;
 }
 
 export async function getProduct(id: string): Promise<Product | undefined> {
