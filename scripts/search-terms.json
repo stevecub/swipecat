@@ -1,0 +1,102 @@
+{
+  "womens-shoes": [
+    "women's sneakers trending new arrivals",
+    "women's sandals summer comfortable",
+    "women's boots ankle fashion",
+    "women's heels party evening",
+    "women's flats comfortable work office",
+    "women's running shoes athletic",
+    "women's slip on shoes casual everyday",
+    "women's platform shoes chunky trendy"
+  ],
+  "electronics": [
+    "electronics gadgets cool new tech",
+    "wireless earbuds bluetooth headphones",
+    "smart home devices alexa compatible",
+    "portable charger power bank fast charging",
+    "gaming accessories controller headset",
+    "phone accessories cases stands",
+    "tablet accessories stylus keyboard",
+    "LED lights smart bulbs strip lights"
+  ],
+  "womens-fashion": [
+    "women's dresses casual summer",
+    "women's tops blouses trendy",
+    "women's jeans pants high waist",
+    "women's activewear leggings sets",
+    "women's sweaters cardigans cozy",
+    "women's jackets coats lightweight",
+    "women's skirts midi maxi",
+    "women's loungewear pajamas comfortable"
+  ],
+  "mens-fashion": [
+    "men's casual shirts button down",
+    "men's sneakers shoes comfortable",
+    "men's joggers pants athletic",
+    "men's jackets bomber lightweight",
+    "men's shorts summer casual",
+    "men's polo shirts classic fit",
+    "men's watches affordable stylish",
+    "men's hoodies sweatshirts pullover"
+  ],
+  "beauty": [
+    "skincare routine products moisturizer serum",
+    "makeup bestsellers foundation concealer",
+    "hair care products shampoo treatment",
+    "beauty tools brushes organizer",
+    "lip care lipstick gloss trending",
+    "eye makeup palette mascara",
+    "sunscreen SPF face body",
+    "nail polish gel kit manicure"
+  ],
+  "home-decor": [
+    "home decor modern minimalist",
+    "wall art prints canvas framed",
+    "throw pillows blankets cozy living room",
+    "candles scented decorative",
+    "vases flowers artificial arrangements",
+    "mirrors decorative wall hanging",
+    "rugs area carpet living room bedroom",
+    "shelves floating wall mounted storage"
+  ],
+  "kitchen": [
+    "kitchen gadgets tools innovative",
+    "cooking utensils set silicone",
+    "coffee maker accessories espresso",
+    "food storage containers organization",
+    "cutting boards knives chef",
+    "blender mixer smoothie portable",
+    "air fryer accessories baking",
+    "kitchen organizer spice rack drawer"
+  ],
+  "fitness": [
+    "fitness equipment home gym",
+    "yoga mat accessories blocks",
+    "resistance bands exercise set",
+    "water bottle gym insulated",
+    "workout clothes women athletic",
+    "dumbbells weights adjustable",
+    "fitness tracker watch band",
+    "foam roller massage recovery"
+  ],
+  "jewelry": [
+    "jewelry women necklace pendant",
+    "earrings hoop stud trendy",
+    "bracelets bangles charm",
+    "rings stackable fashion statement",
+    "jewelry organizer box storage",
+    "anklets body jewelry summer",
+    "hair accessories clips claw",
+    "sunglasses women fashion polarized"
+  ],
+  "pets": [
+    "dog toys chew interactive",
+    "cat toys interactive laser",
+    "pet bed comfortable orthopedic",
+    "dog treats training healthy",
+    "pet grooming brush deshedding",
+    "cat tree tower scratching post",
+    "dog leash harness no pull",
+    "pet water fountain automatic feeder"
+  ]
+}
