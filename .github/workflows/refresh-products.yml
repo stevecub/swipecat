@@ -1,0 +1,51 @@
+name: Daily Product Refresh
+
+on:
+  # Daily at 10:00 AM UTC (5:00 AM CDT)
+  schedule:
+    - cron: '0 10 * * *'
+
+  # Allow manual trigger with mode selection
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Refresh mode'
+        required: true
+        default: 'daily'
+        type: choice
+        options:
+          - daily
+          - full
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install @supabase/supabase-js
+
+      - name: Run product refresh
+        env:
+          RAINFOREST_API_KEY: ${{ secrets.RAINFOREST_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          MODE="${{ github.event.inputs.mode || 'daily' }}"
+          node scripts/refresh-products.mjs --mode $MODE
+
+      - name: Commit rotation state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add scripts/.rotation-state.json || true
+          git diff --cached --quiet || git commit -m "chore: advance search term rotation state"
+          git push || true

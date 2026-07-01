@@ -1,0 +1,31 @@
+name: Weekly Bestsellers & Deals Refresh
+
+on:
+  # Every Monday at 11:00 AM UTC (6:00 AM CDT)
+  schedule:
+    - cron: '0 11 * * 1'
+
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  weekly-refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install @supabase/supabase-js
+
+      - name: Run weekly refresh (bestsellers + deals)
+        env:
+          RAINFOREST_API_KEY: ${{ secrets.RAINFOREST_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/refresh-products.mjs --mode weekly
