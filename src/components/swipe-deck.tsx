@@ -1,117 +1,93 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  AnimatePresence,
-  motion,
-  useMotionValue,
-  useTransform,
-  useVelocity,
-  animate,
-  MotionValue,
-} from "framer-motion";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { AnimatePresence, motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { buildBuyUrl, type Product } from "@/lib/products";
 import { haptic } from "@/lib/haptics";
 
 type Action = "like" | "pass";
 
-const SWIPE_OFFSET_THRESHOLD = 110;   // px of displacement to commit
-const SWIPE_VELOCITY_THRESHOLD = 450; // px/s to commit via flick
-const FLY_OFF_DISTANCE = 600;         // px the card travels off-screen
+const SWIPE_COMMIT_DISTANCE = 110; // px to commit a swipe
+const SWIPE_COMMIT_VELOCITY = 400; // px/s to commit via flick
+const FLY_OFF_DISTANCE = 600;      // px the card travels off-screen
 
+/**
+ * SwipeCard — uses RAW pointer events for gesture handling.
+ *
+ * Why not Framer Motion's `drag` prop?
+ * FM's drag system has internal state (pan session, constraints, elastic
+ * calculations) that can get stuck when:
+ * - A card transitions from drag=false to drag="x" (background → top)
+ * - animate() is called on the same motion value the drag system "owns"
+ * - The component re-renders mid-gesture
+ *
+ * By using raw pointer events + manual x.set(), we have ZERO internal state
+ * that can lock up. The card will ALWAYS respond to touch.
+ */
 export function SwipeCard({
   product,
   onSwipe,
   isTop,
   stackIndex,
-  dragProgress,
-  onDragProgressRef,
+  dragProgress, // 0→1 from the top card, drives background card reveal
+  onDragProgress, // callback to report drag progress to parent
 }: {
   product: Product;
   onSwipe: (action: Action) => void;
   isTop: boolean;
   stackIndex: number;
-  dragProgress?: MotionValue<number>;
-  onDragProgressRef?: (mv: MotionValue<number>) => void;
+  dragProgress: number; // simple number now, not a MotionValue
+  onDragProgress?: (progress: number) => void;
 }) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  const xVelocity = useVelocity(x);
 
-  // This card's own drag progress (0 → 1), exposed to the deck for background cards
-  const myDragProgress = useMotionValue(0);
-
-  // Register this card's drag progress with the deck when it becomes the top card.
-  // The ref callback pattern means the deck always has the latest MotionValue.
-  useEffect(() => {
-    if (isTop && onDragProgressRef) {
-      onDragProgressRef(myDragProgress);
-    }
-  }, [isTop, onDragProgressRef, myDragProgress]);
-
-  // Keep myDragProgress in sync with x
-  useEffect(() => {
-    if (!isTop) return;
-    return x.on("change", (v) => {
-      myDragProgress.set(Math.min(1, Math.abs(v) / FLY_OFF_DISTANCE));
-    });
-  }, [isTop, x, myDragProgress]);
-
-  // Visual transforms for the top card
+  // Visual transforms
   const rotate = useTransform(x, [-250, 0, 250], [-22, 0, 22]);
   const likeOpacity = useTransform(x, [30, 120], [0, 1]);
   const passOpacity = useTransform(x, [-120, -30], [1, 0]);
 
-  // Visual transforms for background cards — driven by the top card's drag progress
-  const bgScale = dragProgress
-    ? useTransform(dragProgress, [0, 1], [1 - stackIndex * 0.04, 1 - (stackIndex - 1) * 0.04])
-    : undefined;
-  const bgY = dragProgress
-    ? useTransform(dragProgress, [0, 1], [stackIndex * 10, (stackIndex - 1) * 10])
-    : undefined;
-  const bgOpacity = dragProgress
-    ? useTransform(dragProgress, [0, 0.15], [0.85, 1])
-    : undefined;
+  // Refs for gesture tracking — no React state to avoid re-renders during drag
+  const gestureRef = useRef({
+    active: false,        // is a drag currently happening?
+    committed: false,     // has this card already been committed to fly off?
+    startX: 0,           // pointer start position
+    startY: 0,
+    startTime: 0,
+    lastX: 0,            // last pointer position (for velocity calc)
+    lastTime: 0,
+    velocityX: 0,        // estimated velocity
+    pointerId: -1,       // which pointer we're tracking
+    maxDist: 0,          // max distance moved (for tap detection)
+  });
 
-  // swipingRef is initialised to false on every mount — this is the key fix.
-  // Previously it was never reset, so after a swipe completed the new top card
-  // (which re-uses the same component type) inherited swipingRef = true and
-  // blocked all subsequent input.
-  const swipingRef = useRef(false);
+  // Reset state when this card mounts or becomes the top card
   useEffect(() => {
-    // Reset on every mount so a fresh card always starts unlocked
-    swipingRef.current = false;
-  }, []);
+    if (isTop) {
+      gestureRef.current.committed = false;
+      gestureRef.current.active = false;
+      x.set(0);
+      y.set(0);
+    }
+  }, [isTop, x, y]);
 
-  const pointerRef = useRef<{
-    startX: number;
-    startY: number;
-    startT: number;
-    maxDist: number;
-    dragging: boolean;
-    blockedUntil: number;
-  }>({ startX: 0, startY: 0, startT: 0, maxDist: 0, dragging: false, blockedUntil: 0 });
-
-  const commitSwipe = (direction: Action, currentVx: number) => {
-    if (swipingRef.current) return;
-    swipingRef.current = true;
+  const commitSwipe = useCallback((direction: Action) => {
+    const g = gestureRef.current;
+    if (g.committed) return;
+    g.committed = true;
+    g.active = false;
 
     void haptic(direction === "like" ? "success" : "light");
 
     const sign = direction === "like" ? 1 : -1;
     const targetX = sign * FLY_OFF_DISTANCE;
 
-    // Slight arc based on where on the card the drag started
-    const cardEl = document.getElementById(`swipe-card-${product.id}`);
-    let targetY = 0;
-    if (cardEl) {
-      const rect = cardEl.getBoundingClientRect();
-      const relY = pointerRef.current.startY - rect.top;
-      const midY = rect.height / 2;
-      targetY = ((relY - midY) / midY) * 80;
-    }
+    // Slight vertical arc
+    const currentY = y.get();
+    const targetY = currentY * 0.5; // continue in the direction of any vertical drift
 
-    const absVx = Math.abs(currentVx);
-    const duration = absVx > SWIPE_VELOCITY_THRESHOLD
+    // Duration based on velocity
+    const absVx = Math.abs(g.velocityX);
+    const duration = absVx > SWIPE_COMMIT_VELOCITY
       ? Math.max(0.18, Math.min(0.32, FLY_OFF_DISTANCE / absVx))
       : 0.28;
 
@@ -129,89 +105,127 @@ export function SwipeCard({
       ease: [0.25, 0.46, 0.45, 0.94],
       duration,
     });
+  }, [onSwipe, x, y]);
 
-    animate(myDragProgress, 1, { type: "tween", duration });
-  };
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    if (!isTop) return;
+    const g = gestureRef.current;
+    if (g.committed) return;
+
+    // Capture this pointer
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+
+    g.active = true;
+    g.pointerId = e.pointerId;
+    g.startX = e.clientX;
+    g.startY = e.clientY;
+    g.startTime = performance.now();
+    g.lastX = e.clientX;
+    g.lastTime = performance.now();
+    g.velocityX = 0;
+    g.maxDist = 0;
+  }, [isTop]);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    const g = gestureRef.current;
+    if (!g.active || g.committed || e.pointerId !== g.pointerId) return;
+
+    const dx = e.clientX - g.startX;
+    const dy = e.clientY - g.startY;
+    const dist = Math.hypot(dx, dy);
+    if (dist > g.maxDist) g.maxDist = dist;
+
+    // Set card position directly — no middleware, no internal state
+    x.set(dx);
+    y.set(dy * 0.3); // dampen vertical movement
+
+    // Report drag progress to parent for background card reveal
+    if (onDragProgress) {
+      onDragProgress(Math.min(1, Math.abs(dx) / FLY_OFF_DISTANCE));
+    }
+
+    // Calculate velocity (exponential moving average)
+    const now = performance.now();
+    const dt = now - g.lastTime;
+    if (dt > 0) {
+      const instantVx = ((e.clientX - g.lastX) / dt) * 1000; // px/s
+      g.velocityX = g.velocityX * 0.6 + instantVx * 0.4; // smooth
+    }
+    g.lastX = e.clientX;
+    g.lastTime = now;
+
+    // Mid-drag commit: if velocity is high enough, commit immediately
+    if (Math.abs(g.velocityX) > SWIPE_COMMIT_VELOCITY && Math.abs(dx) > 30) {
+      commitSwipe(g.velocityX > 0 ? "like" : "pass");
+    }
+  }, [x, y, commitSwipe]);
+
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    const g = gestureRef.current;
+    if (e.pointerId !== g.pointerId) return;
+    if (g.committed) return;
+
+    g.active = false;
+
+    const dx = e.clientX - g.startX;
+    const elapsed = performance.now() - g.startTime;
+
+    // Check if this was a tap (not a drag)
+    if (g.maxDist < 10 && elapsed < 250) {
+      // It's a tap — open the product
+      window.open(buildBuyUrl(product), "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    // Check if swipe should commit (by distance or velocity)
+    if (dx > SWIPE_COMMIT_DISTANCE || g.velocityX > SWIPE_COMMIT_VELOCITY) {
+      commitSwipe("like");
+    } else if (dx < -SWIPE_COMMIT_DISTANCE || g.velocityX < -SWIPE_COMMIT_VELOCITY) {
+      commitSwipe("pass");
+    } else {
+      // Snap back to center
+      if (onDragProgress) onDragProgress(0);
+      animate(x, 0, { type: "spring", stiffness: 500, damping: 35 });
+      animate(y, 0, { type: "spring", stiffness: 500, damping: 35 });
+    }
+  }, [x, y, product, commitSwipe]);
+
+  const handlePointerCancel = useCallback((e: React.PointerEvent) => {
+    const g = gestureRef.current;
+    if (e.pointerId !== g.pointerId) return;
+    if (g.committed) return;
+    g.active = false;
+    // Snap back on cancel
+    animate(x, 0, { type: "spring", stiffness: 500, damping: 35 });
+    animate(y, 0, { type: "spring", stiffness: 500, damping: 35 });
+  }, [x, y]);
+
+  // Background card transforms — simple CSS driven by dragProgress prop (0→1)
+  const bgScale = 1 - stackIndex * 0.04 + dragProgress * 0.04;
+  const bgYOffset = stackIndex * 10 - dragProgress * 10;
+  const bgOpacityVal = 0.85 + dragProgress * 0.15;
 
   return (
     <motion.div
-      id={`swipe-card-${product.id}`}
-      className={isTop ? "absolute inset-0 cursor-grab active:cursor-grabbing" : "absolute inset-0"}
+      className="absolute inset-0"
       style={{
         x: isTop ? x : 0,
-        y: isTop ? y : bgY ?? stackIndex * 10,
+        y: isTop ? y : bgYOffset,
         rotate: isTop ? rotate : 0,
-        scale: isTop ? 1 : bgScale ?? (1 - stackIndex * 0.04),
-        opacity: isTop ? 1 : bgOpacity ?? 1,
+        scale: isTop ? 1 : bgScale,
+        opacity: isTop ? 1 : bgOpacityVal,
         zIndex: 10 - stackIndex,
-        touchAction: isTop ? "none" : "auto",
+        touchAction: "none",         // ALWAYS none — prevents browser gesture conflicts
+        userSelect: "none",
+        WebkitUserSelect: "none",
       }}
       initial={false}
-      animate={!isTop && !dragProgress ? {
-        scale: 1 - stackIndex * 0.04,
-        y: stackIndex * 10,
-        opacity: 1,
-      } : undefined}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      drag={isTop ? "x" : false}
-      dragElastic={1}
-      onPointerDown={(e) => {
-        if (!isTop) return;
-        pointerRef.current = {
-          startX: e.clientX,
-          startY: e.clientY,
-          startT: performance.now(),
-          maxDist: 0,
-          dragging: false,
-          blockedUntil: pointerRef.current.blockedUntil,
-        };
-      }}
-      onPointerMove={(e) => {
-        if (!isTop) return;
-        const p = pointerRef.current;
-        const d = Math.hypot(e.clientX - p.startX, e.clientY - p.startY);
-        if (d > p.maxDist) p.maxDist = d;
-      }}
-      onDragStart={() => {
-        pointerRef.current.dragging = true;
-      }}
-      onDrag={() => {
-        if (!isTop || swipingRef.current) return;
-        const vx = xVelocity.get();
-        const currentX = x.get();
-        if (Math.abs(vx) > SWIPE_VELOCITY_THRESHOLD && Math.abs(currentX) > 30) {
-          commitSwipe(vx > 0 ? "like" : "pass", vx);
-        }
-      }}
-      onDragEnd={(_, info) => {
-        if (!isTop || swipingRef.current) return;
-        pointerRef.current.dragging = false;
-        pointerRef.current.blockedUntil = performance.now() + 350;
-
-        const offsetX = info.offset.x;
-        const vx = xVelocity.get();
-
-        if (offsetX > SWIPE_OFFSET_THRESHOLD || vx > SWIPE_VELOCITY_THRESHOLD) {
-          commitSwipe("like", vx);
-        } else if (offsetX < -SWIPE_OFFSET_THRESHOLD || vx < -SWIPE_VELOCITY_THRESHOLD) {
-          commitSwipe("pass", vx);
-        } else {
-          animate(x, 0, { type: "spring", stiffness: 400, damping: 30 });
-          animate(y, 0, { type: "spring", stiffness: 400, damping: 30 });
-          animate(myDragProgress, 0, { type: "spring", stiffness: 400, damping: 30 });
-        }
-      }}
-      onPointerUp={(e) => {
-        if (!isTop) return;
-        const p = pointerRef.current;
-        const now = performance.now();
-        if (p.dragging) return;
-        if (now < p.blockedUntil) return;
-        const dist = Math.hypot(e.clientX - p.startX, e.clientY - p.startY);
-        const elapsed = now - p.startT;
-        if (dist > 10 || p.maxDist > 10 || elapsed > 250) return;
-        window.open(buildBuyUrl(product), "_blank", "noopener,noreferrer");
-      }}
+      // Exit animation — card fades out after flying off (cleanup)
+      exit={{ opacity: 0, transition: { duration: 0.1 } }}
+      onPointerDown={isTop ? handlePointerDown : undefined}
+      onPointerMove={isTop ? handlePointerMove : undefined}
+      onPointerUp={isTop ? handlePointerUp : undefined}
+      onPointerCancel={isTop ? handlePointerCancel : undefined}
     >
       <div className="relative h-full w-full overflow-hidden rounded-[2rem] bg-card shadow-[0_20px_50px_-15px_rgba(0,0,0,0.25)] ring-1 ring-border">
         <img
@@ -222,6 +236,7 @@ export function SwipeCard({
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
 
+        {/* Swipe tint overlays */}
         {isTop && (
           <>
             <motion.div
@@ -292,32 +307,9 @@ export function SwipeDeck({
   const [index, setIndex] = useState(0);
   const visible = useMemo(() => products.slice(index, index + premarkWindow), [products, index, premarkWindow]);
 
-  // sharedDragProgress is a stable MotionValue that background cards subscribe to.
-  // When the top card changes, handleDragProgressRef wires up the new card's
-  // MotionValue and properly cleans up the previous subscription.
-  const sharedDragProgress = useMotionValue(0);
-  const unsubRef = useRef<(() => void) | null>(null);
-
-  const handleDragProgressRef = (mv: MotionValue<number>) => {
-    // Clean up the previous subscription before wiring up the new one
-    if (unsubRef.current) {
-      unsubRef.current();
-      unsubRef.current = null;
-    }
-    unsubRef.current = mv.on("change", (v) => sharedDragProgress.set(v));
-  };
-
-  // Reset shared progress whenever the deck advances to a new card
-  useEffect(() => {
-    sharedDragProgress.set(0);
-  }, [index, sharedDragProgress]);
-
-  // Clean up subscription on unmount
-  useEffect(() => {
-    return () => {
-      if (unsubRef.current) unsubRef.current();
-    };
-  }, []);
+  // Track drag progress for background card reveal (0→1)
+  // Updated via a subscription to the top card's x motion value
+  const [dragProgress, setDragProgress] = useState(0);
 
   const prevVisibleKey = useRef<string>("");
   useEffect(() => {
@@ -328,12 +320,13 @@ export function SwipeDeck({
     onVisibleIds(visible.map((p) => p.id));
   }, [visible, onVisibleIds]);
 
-  const handle = (action: Action) => {
+  const handle = useCallback((action: Action) => {
     const current = products[index];
     if (!current) return;
     onAction(current, action);
+    setDragProgress(0);
     setIndex((i) => i + 1);
-  };
+  }, [products, index, onAction]);
 
   if (index >= products.length) {
     return (
@@ -355,22 +348,22 @@ export function SwipeDeck({
 
   return (
     <div className="relative h-full w-full">
-      <AnimatePresence>
+      <AnimatePresence mode="popLayout">
         {visible
           .slice()
           .reverse()
           .map((product) => {
-            const stackIndex = visible.indexOf(product);
-            const isTop = stackIndex === 0;
+            const si = visible.indexOf(product);
+            const isTop = si === 0;
             return (
               <SwipeCard
                 key={product.id}
                 product={product}
                 isTop={isTop}
-                stackIndex={stackIndex}
+                stackIndex={si}
                 onSwipe={handle}
-                onDragProgressRef={isTop ? handleDragProgressRef : undefined}
-                dragProgress={!isTop ? sharedDragProgress : undefined}
+                dragProgress={isTop ? 0 : dragProgress}
+                onDragProgress={isTop ? setDragProgress : undefined}
               />
             );
           })}

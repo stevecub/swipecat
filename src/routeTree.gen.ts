@@ -9,17 +9,30 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as _rootCapacitorRouteImport } from './routes/__root.capacitor'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as PassedRouteImport } from './routes/passed'
 import { Route as LikedRouteImport } from './routes/liked'
 import { Route as CategoriesRouteImport } from './routes/categories'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
+import { Route as AdminCapacitorRouteImport } from './routes/admin.capacitor'
 
+const _rootCapacitorRoute = _rootCapacitorRouteImport.update({
+  id: '/__root/capacitor',
+  path: '/capacitor',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PassedRoute = PassedRouteImport.update({
+  id: '/passed',
+  path: '/passed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LikedRoute = LikedRouteImport.update({
@@ -52,33 +65,47 @@ const ProductIdRoute = ProductIdRouteImport.update({
   path: '/product/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminCapacitorRoute = AdminCapacitorRouteImport.update({
+  id: '/capacitor',
+  path: '/capacitor',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/categories': typeof CategoriesRoute
   '/liked': typeof LikedRoute
+  '/passed': typeof PassedRoute
   '/privacy': typeof PrivacyRoute
+  '/capacitor': typeof _rootCapacitorRoute
+  '/admin/capacitor': typeof AdminCapacitorRoute
   '/product/$id': typeof ProductIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/categories': typeof CategoriesRoute
   '/liked': typeof LikedRoute
+  '/passed': typeof PassedRoute
   '/privacy': typeof PrivacyRoute
+  '/capacitor': typeof _rootCapacitorRoute
+  '/admin/capacitor': typeof AdminCapacitorRoute
   '/product/$id': typeof ProductIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/categories': typeof CategoriesRoute
   '/liked': typeof LikedRoute
+  '/passed': typeof PassedRoute
   '/privacy': typeof PrivacyRoute
+  '/__root/capacitor': typeof _rootCapacitorRoute
+  '/admin/capacitor': typeof AdminCapacitorRoute
   '/product/$id': typeof ProductIdRoute
 }
 export interface FileRouteTypes {
@@ -89,7 +116,10 @@ export interface FileRouteTypes {
     | '/admin'
     | '/categories'
     | '/liked'
+    | '/passed'
     | '/privacy'
+    | '/capacitor'
+    | '/admin/capacitor'
     | '/product/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -98,7 +128,10 @@ export interface FileRouteTypes {
     | '/admin'
     | '/categories'
     | '/liked'
+    | '/passed'
     | '/privacy'
+    | '/capacitor'
+    | '/admin/capacitor'
     | '/product/$id'
   id:
     | '__root__'
@@ -107,27 +140,46 @@ export interface FileRouteTypes {
     | '/admin'
     | '/categories'
     | '/liked'
+    | '/passed'
     | '/privacy'
+    | '/__root/capacitor'
+    | '/admin/capacitor'
     | '/product/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
   CategoriesRoute: typeof CategoriesRoute
   LikedRoute: typeof LikedRoute
+  PassedRoute: typeof PassedRoute
   PrivacyRoute: typeof PrivacyRoute
+  _rootCapacitorRoute: typeof _rootCapacitorRoute
   ProductIdRoute: typeof ProductIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/__root/capacitor': {
+      id: '/__root/capacitor'
+      path: '/capacitor'
+      fullPath: '/capacitor'
+      preLoaderRoute: typeof _rootCapacitorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/privacy': {
       id: '/privacy'
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/passed': {
+      id: '/passed'
+      path: '/passed'
+      fullPath: '/passed'
+      preLoaderRoute: typeof PassedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/liked': {
@@ -172,18 +224,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/capacitor': {
+      id: '/admin/capacitor'
+      path: '/capacitor'
+      fullPath: '/admin/capacitor'
+      preLoaderRoute: typeof AdminCapacitorRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
+
+interface AdminRouteChildren {
+  AdminCapacitorRoute: typeof AdminCapacitorRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminCapacitorRoute: AdminCapacitorRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
   CategoriesRoute: CategoriesRoute,
   LikedRoute: LikedRoute,
+  PassedRoute: PassedRoute,
   PrivacyRoute: PrivacyRoute,
+  _rootCapacitorRoute: _rootCapacitorRoute,
   ProductIdRoute: ProductIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

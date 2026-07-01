@@ -14,7 +14,7 @@ import { CATEGORIES } from "@/lib/categories";
 // ── Rainforest API key (baked in at build time) ───────────────────────────────
 const RAINFOREST_KEY = import.meta.env.VITE_RAINFOREST_API_KEY as string;
 
-export const Route = createFileRoute("/admin")({
+export const Route = createFileRoute("/admin/capacitor")({
   component: AdminCapacitorPage,
 });
 
