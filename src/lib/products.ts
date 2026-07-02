@@ -101,11 +101,11 @@ const CATEGORY_VALUES: string[] = [
  * outside the 500-row window and never be returned, making that category
  * appear empty even though it had hundreds of products in the database.
  *
- * Fix: fetch up to 50 products per category (500 total across 10 categories)
+ * Fix: fetch up to 200 products per category (2000 total across 10 categories)
  * ordered randomly so users see different products each session.
  */
 export async function getProducts(): Promise<Product[]> {
-  const PER_CATEGORY = 50;
+  const PER_CATEGORY = 200;
 
   const results = await Promise.all(
     CATEGORY_VALUES.map(async (cat) => {
