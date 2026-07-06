@@ -24,6 +24,7 @@ import type { Product } from "@/lib/products";
 
 const DAILY_DROP_SIZE = 15;
 const SEEN_KEY = "swipecat:daily-drop-seen:v1";
+const COMPLETED_KEY = "swipecat:daily-drop-completed:v1";
 
 /** Simple seeded pseudo-random number generator (mulberry32) */
 function seededRandom(seed: number) {
@@ -132,9 +133,31 @@ function markDropSeen() {
   }
 }
 
+/** Check if the user has already completed today's drop */
+function hasCompletedTodaysDrop(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const raw = window.localStorage.getItem(COMPLETED_KEY);
+    return raw === todayStr();
+  } catch {
+    return false;
+  }
+}
+
+/** Mark today's drop as completed */
+function markDropCompleted() {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(COMPLETED_KEY, todayStr());
+  } catch {
+    // Ignore
+  }
+}
+
 export function useDailyDrop(allProducts: Product[]) {
   const [countdown, setCountdown] = useState(secondsUntilMidnight());
   const [hasSeenDrop, setHasSeenDrop] = useState(() => hasSeenTodaysDrop());
+  const [isDropCompleted, setIsDropCompleted] = useState(() => hasCompletedTodaysDrop());
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Countdown timer
@@ -161,11 +184,20 @@ export function useDailyDrop(allProducts: Product[]) {
     setHasSeenDrop(true);
   }, []);
 
+  const markCompleted = useCallback(() => {
+    markDropCompleted();
+    markDropSeen(); // also mark as seen
+    setIsDropCompleted(true);
+    setHasSeenDrop(true);
+  }, []);
+
   return {
     dailyProducts,
     countdown,
     formattedCountdown: formatCountdown(countdown),
     hasNewDrop,
+    isDropCompleted,
     markSeen,
+    markCompleted,
   };
 }

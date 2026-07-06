@@ -67,10 +67,11 @@ export function DailyDropComplete({ visible, onDismiss }: Props) {
         });
       }, 600);
 
-      // Auto-dismiss after 3.5 seconds
+      // Auto-dismiss after 6 seconds — long enough to enjoy the confetti
+      // and read the message without feeling rushed
       setTimeout(() => {
         onDismiss();
-      }, 3500);
+      }, 6000);
     }
 
     if (!visible) {

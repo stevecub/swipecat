@@ -82,7 +82,7 @@ function Discover() {
   const { levelInfo, justLeveledUp, recordSwipeForLevel, dismissLevelUp } = useLevel();
 
   // ─── Daily Drop ─────────────────────────────────────────────────────────────
-  const { dailyProducts, hasNewDrop, markSeen: markDropSeen } = useDailyDrop(rawProducts);
+  const { dailyProducts, hasNewDrop, isDropCompleted, markSeen: markDropSeen, markCompleted: markDropCompleted } = useDailyDrop(rawProducts);
   const [dailyDropActive, setDailyDropActive] = useState(false);
   const [dropSwipeCount, setDropSwipeCount] = useState(0);
   const [showDropComplete, setShowDropComplete] = useState(false);
@@ -211,6 +211,7 @@ function Discover() {
       setDropSwipeCount(newDropCount);
       // Trigger completion celebration when all drop products are swiped
       if (newDropCount >= dailyProducts.length && dailyProducts.length > 0) {
+        markDropCompleted(); // persist completion so banner stays hidden
         setTimeout(() => setShowDropComplete(true), 400);
       }
     }
@@ -283,15 +284,17 @@ function Discover() {
       </header>
 
       <main className="relative flex-1 px-5 pb-20">
-        {/* Daily Drop banner */}
-        <DailyDropBanner
-          hasNewDrop={hasNewDrop}
-          isActive={dailyDropActive}
-          dropCount={dailyProducts.length}
-          remaining={dropRemaining}
-          onActivate={handleActivateDrop}
-          onDeactivate={handleDeactivateDrop}
-        />
+        {/* Daily Drop banner — hidden once the drop is fully completed for the day */}
+        {!isDropCompleted && (
+          <DailyDropBanner
+            hasNewDrop={hasNewDrop}
+            isActive={dailyDropActive}
+            dropCount={dailyProducts.length}
+            remaining={dropRemaining}
+            onActivate={handleActivateDrop}
+            onDeactivate={handleDeactivateDrop}
+          />
+        )}
 
         <div className="relative mx-auto aspect-[3/4.6] h-full max-h-[580px] w-full max-w-md">
           {showOfflineState ? (
