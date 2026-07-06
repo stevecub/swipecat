@@ -129,7 +129,7 @@ function Passed() {
                         {p.title}
                       </h3>
                       <p className="mt-1 text-xs font-bold">
-                        {p.price != null ? `$${p.price}` : "View price"}
+                        {p.price != null ? `$${Number(p.price).toFixed(2)}` : "View price"}
                       </p>
                     </div>
                   </a>
