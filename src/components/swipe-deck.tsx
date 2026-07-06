@@ -316,8 +316,18 @@ export function SwipeCard({
           {isGolden && (
             <motion.span
               initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 400, damping: 20 }}
+              animate={{
+                rotate: [0, -2, 2, -2, 2, 0],
+                scale: [1, 1.05, 1.05, 1.05, 1.05, 1],
+                opacity: 1,
+              }}
+              transition={{
+                duration: 0.45,
+                ease: "easeInOut",
+                repeat: Infinity,
+                repeatDelay: 4,
+                delay: 1,
+              }}
               className="inline-flex items-center gap-1 rounded-full bg-amber-400 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-amber-900 shadow-md"
             >
               ⭐ TOP PICK
