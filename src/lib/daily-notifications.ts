@@ -1,9 +1,12 @@
 /**
  * daily-notifications.ts
  *
- * Manages a daily "Fresh picks are ready!" local notification using
- * @capacitor/local-notifications. The notification fires every day at 10:00 AM
- * local time, bringing users back to discover new products.
+ * Manages daily local notifications using @capacitor/local-notifications.
+ * The notification fires every day at 10:00 AM local time.
+ *
+ * Notification copy uses two psychological levers:
+ *   - Curiosity-gap: make the user wonder what's waiting inside
+ *   - Loss-aversion: make the user fear missing out or losing their streak
  *
  * The user's preference (enabled/disabled) is persisted to localStorage.
  * On native iOS, this requests notification permission on first enable.
@@ -16,14 +19,33 @@ import { LocalNotifications } from "@capacitor/local-notifications";
 const PREF_KEY = "swipecat:daily-notif:v1";
 const NOTIFICATION_ID = 9001; // Stable ID so we can cancel/replace
 
-/** Notification messages — we rotate through them for variety */
-const MESSAGES = [
-  "Your fresh picks are ready! 🐱 Swipe to discover something new.",
-  "New products waiting for you! 🛍️ Come see what's trending.",
-  "Time to swipe! 🎯 Fresh finds are ready in SwipeCat.",
-  "Your daily picks just dropped! 🔥 Open SwipeCat to explore.",
-  "Something new is waiting! ✨ Swipe right on your next favorite.",
+/** Curiosity-gap messages — make them wonder what's waiting */
+const CURIOSITY_MESSAGES = [
+  { title: "SwipeCat", body: "Something in your feed is blowing up right now... 👀" },
+  { title: "SwipeCat", body: "We found a hidden gem you haven't seen yet. 💎" },
+  { title: "SwipeCat", body: "One product is getting all the attention today. Guess which one?" },
+  { title: "SwipeCat", body: "A top-rated find just appeared in your feed. 🔥" },
+  { title: "SwipeCat", body: "Your next favorite thing is waiting. Come find it. 🐱" },
 ];
+
+/** Loss-aversion messages — make them fear missing out or losing their streak */
+const LOSS_MESSAGES = [
+  { title: "Don't break your streak! 🔥", body: "Swipe today to keep your SwipeCat streak alive." },
+  { title: "Today's picks expire at midnight ⏰", body: "Fresh finds are waiting — don't let them disappear." },
+  { title: "Your feed is getting stale 😬", body: "New products are in. Open SwipeCat before you miss them." },
+  { title: "SwipeCat misses you 🐱", body: "It's been a while. Your streak is at risk — swipe now!" },
+  { title: "Last chance today 🚨", body: "Today's curated picks are almost gone. Swipe before midnight." },
+];
+
+/** Pick a message — alternate between curiosity and loss-aversion for variety */
+function pickMessage(): { title: string; body: string } {
+  // Use day-of-year parity to alternate message types
+  const dayOfYear = Math.floor(
+    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000,
+  );
+  const pool = dayOfYear % 2 === 0 ? CURIOSITY_MESSAGES : LOSS_MESSAGES;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
 
 /**
  * Check if the user has enabled daily notifications.
@@ -85,15 +107,15 @@ export async function enableDailyNotifications(): Promise<boolean> {
     await cancelDailyNotification();
 
     // Schedule a daily notification at 10:00 AM local time
-    // Pick a random message for variety
-    const msg = MESSAGES[Math.floor(Math.random() * MESSAGES.length)];
+    // Pick a psychologically-tuned message
+    const msg = pickMessage();
 
     await LocalNotifications.schedule({
       notifications: [
         {
           id: NOTIFICATION_ID,
-          title: "SwipeCat",
-          body: msg,
+          title: msg.title,
+          body: msg.body,
           schedule: {
             on: {
               hour: 10,
@@ -142,10 +164,8 @@ async function cancelDailyNotification() {
 
 /**
  * Initialize notifications on app startup.
- * - On first launch (no preference saved): automatically requests permission
- *   and schedules daily notifications (default ON behavior).
- * - On subsequent launches: re-schedules if user hasn't turned them off
- *   (iOS clears scheduled notifications on app update).
+ * Re-schedules with a fresh message on every launch so the copy stays
+ * varied (iOS clears scheduled notifications on app update).
  */
 export async function initDailyNotifications(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;

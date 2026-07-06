@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { SwipeDeck } from "@/components/swipe-deck";
 import { SwipeHints } from "@/components/swipe-hints";
 import { SwipeCounters } from "@/components/swipe-counters";
+import { StreakBadge } from "@/components/streak-badge";
 import { BottomNav } from "@/components/bottom-nav";
 import { OfflineBanner } from "@/components/offline-banner";
 import { OfflineState } from "@/components/offline-state";
@@ -12,6 +13,8 @@ import { useProductLists } from "@/hooks/use-product-lists";
 import { useCategories } from "@/hooks/use-categories";
 import { useSeen } from "@/hooks/use-seen";
 import { useNetwork } from "@/hooks/use-network";
+import { useStreak } from "@/hooks/use-streak";
+import { usePersonalization } from "@/hooks/use-personalization";
 import { productMatchesCategories } from "@/lib/categories";
 
 export const Route = createFileRoute("/")({
@@ -57,6 +60,8 @@ function Discover() {
   const { selected } = useCategories();
   const { seenSet, markSeen } = useSeen();
   const { isOnline } = useNetwork();
+  const { streakCount, isAtRisk, recordSwipe } = useStreak();
+  const { recordLike, recordPass, weightedSort } = usePersonalization();
 
   // ─── Stable queue ────────────────────────────────────────────────────────────
   //
@@ -92,7 +97,9 @@ function Discover() {
     const base = rawProducts.filter(
       (p) => !excludeSet.has(p.id) && productMatchesCategories(p.category, selected),
     );
-    setQueue(shuffle(base));
+    // Use weighted sort (60% preference + 40% random) instead of pure shuffle
+    // so preferred categories surface earlier without killing discovery.
+    setQueue(weightedSort(base));
     queueBuiltRef.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rawProducts, selected]);
@@ -149,7 +156,7 @@ function Discover() {
               (p) => !exclude.has(p.id) && productMatchesCategories(p.category, selected),
             );
             if (toAdd.length > 0) {
-              setQueue((q) => [...q, ...shuffle(toAdd)]);
+              setQueue((q) => [...q, ...weightedSort(toAdd)]);
             }
             return [...prev, ...newOnes];
           }
@@ -162,9 +169,15 @@ function Discover() {
 
   const handleAction = (product: Product, action: "like" | "pass") => {
     cacheProducts(product);
-    if (action === "like") like(product.id);
-    else pass(product.id);
+    if (action === "like") {
+      like(product.id);
+      recordLike(product); // update category preference score
+    } else {
+      pass(product.id);
+      recordPass(product); // slightly penalize category
+    }
     setSwipeCount((prev) => prev + 1);
+    recordSwipe(); // update daily streak
     // Also add to the build-time exclude set so if the queue ever rebuilds
     // (e.g. category change) this item stays excluded
     excludeAtBuildRef.current.add(product.id);
@@ -201,6 +214,7 @@ function Discover() {
                 }}
               />
               <h1 className="text-xl font-black tracking-tight">SwipeCat</h1>
+              <StreakBadge count={streakCount} isAtRisk={isAtRisk} />
             </div>
           }
         />

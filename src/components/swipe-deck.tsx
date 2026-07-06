@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useMotionValue, useTransform, animate } from "
 import { Link } from "@tanstack/react-router";
 import { buildBuyUrl, type Product } from "@/lib/products";
 import { haptic } from "@/lib/haptics";
+import { getSocialProofCount, formatLikeCount } from "@/lib/social-proof";
 
 type Action = "like" | "pass";
 
@@ -205,6 +206,22 @@ export function SwipeCard({
   const bgYOffset = stackIndex * 10 - dragProgress * 10;
   const bgOpacityVal = 0.85 + dragProgress * 0.15;
 
+  /**
+   * Golden Card: products with rating ≥ 4.5 and reviewCount ≥ 1000 get a
+   * special shimmer/glow treatment. Psychology: peak-end rule + variable reward.
+   * Seeing a "golden" card mid-session creates a moment of delight and signals
+   * high social proof, making the product feel more desirable.
+   */
+  const isGolden =
+    product.rating != null &&
+    product.rating >= 4.5 &&
+    product.reviewCount != null &&
+    product.reviewCount >= 1000;
+
+  /** Social proof count — derived from Amazon data, stable per product */
+  const likeCount = getSocialProofCount(product);
+  const likeCountStr = formatLikeCount(likeCount);
+
   return (
     <motion.div
       className="absolute inset-0"
@@ -227,7 +244,11 @@ export function SwipeCard({
       onPointerUp={isTop ? handlePointerUp : undefined}
       onPointerCancel={isTop ? handlePointerCancel : undefined}
     >
-      <div className="relative h-full w-full overflow-hidden rounded-[2rem] bg-card shadow-[0_20px_50px_-15px_rgba(0,0,0,0.25)] ring-1 ring-border">
+      <div className={`relative h-full w-full overflow-hidden rounded-[2rem] bg-card ${
+          isGolden
+            ? "shadow-[0_20px_60px_-10px_rgba(251,191,36,0.45)] ring-2 ring-amber-400/70"
+            : "shadow-[0_20px_50px_-15px_rgba(0,0,0,0.25)] ring-1 ring-border"
+        }`}>
         <img
           src={product.image}
           alt={product.title}
@@ -235,6 +256,20 @@ export function SwipeCard({
           draggable={false}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+
+        {/* Golden shimmer sweep — animated diagonal highlight for top-rated products */}
+        {isGolden && (
+          <motion.div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background:
+                "linear-gradient(105deg, transparent 30%, rgba(251,191,36,0.18) 50%, transparent 70%)",
+              backgroundSize: "200% 100%",
+            }}
+            animate={{ backgroundPosition: ["200% 0", "-200% 0"] }}
+            transition={{ duration: 2.8, repeat: Infinity, ease: "linear", repeatDelay: 1.5 }}
+          />
+        )}
 
         {/* Swipe tint overlays */}
         {isTop && (
@@ -262,7 +297,18 @@ export function SwipeCard({
           </>
         )}
 
-        <div className="absolute right-4 top-4">
+        <div className="absolute right-4 top-4 flex flex-col items-end gap-1.5">
+          {/* Golden "Top Pick" badge — only shown on top-rated products */}
+          {isGolden && (
+            <motion.span
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 400, damping: 20 }}
+              className="inline-flex items-center gap-1 rounded-full bg-amber-400 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-amber-900 shadow-md"
+            >
+              ⭐ TOP PICK
+            </motion.span>
+          )}
           <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-foreground backdrop-blur">
             {product.category}
           </span>
@@ -321,20 +367,30 @@ export function SwipeCard({
                 <span className="text-[11px] font-semibold text-white">
                   {Number(product.rating).toFixed(1)}
                 </span>
-                {product.review_count != null && product.review_count > 0 && (
+                {product.reviewCount != null && product.reviewCount > 0 && (
                   <span className="text-[11px] text-white/70">
-                    ({product.review_count.toLocaleString()})
+                    ({product.reviewCount.toLocaleString()})
                   </span>
                 )}
               </div>
             </div>
           )}
 
-          {isTop && (
-            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur">
-              Tap card to view on Amazon
+          {/* Social proof + tap hint row */}
+          <div className="mt-2 flex items-center gap-2 flex-wrap">
+            {/* Social proof badge — always shown */}
+            <div className="inline-flex items-center gap-1 rounded-full bg-black/40 px-2.5 py-1 backdrop-blur">
+              <svg viewBox="0 0 20 20" fill="#f87171" className="h-3 w-3" aria-hidden="true">
+                <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
+              </svg>
+              <span className="text-[11px] font-semibold text-white">{likeCountStr} liked this</span>
             </div>
-          )}
+            {isTop && (
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur">
+                Tap card to view on Amazon
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </motion.div>
