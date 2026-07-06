@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Onboarding, hasCompletedOnboarding } from "@/components/onboarding";
 import { SwipeDeck } from "@/components/swipe-deck";
 import { SwipeHints } from "@/components/swipe-hints";
 import { SwipeCounters } from "@/components/swipe-counters";
@@ -51,6 +53,16 @@ const REFETCH_THRESHOLD = 20;
 const PREMARK_WINDOW = 3;
 
 function Discover() {
+  // ─── Onboarding gate ─────────────────────────────────────────────────────────
+  // Check localStorage on mount. If the user hasn't completed onboarding,
+  // show the 3-screen flow. Once complete, transition into the main feed.
+  const [onboarded, setOnboarded] = useState<boolean>(() => hasCompletedOnboarding());
+
+  const handleOnboardingComplete = useCallback(() => {
+    setOnboarded(true);
+  }, []);
+  // ─────────────────────────────────────────────────────────────────────────────
+
   const [rawProducts, setRawProducts] = useState<Product[]>([]);
   const [swipeCount, setSwipeCount] = useState(0);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -189,8 +201,23 @@ function Discover() {
 
   const showOfflineState = rawProducts.length === 0 && (!isOnline || loadFailed);
 
+  // If onboarding hasn't been completed, render the onboarding flow
+  if (!onboarded) {
+    return (
+      <AnimatePresence mode="wait">
+        <Onboarding key="onboarding" onComplete={handleOnboardingComplete} />
+      </AnimatePresence>
+    );
+  }
+
   return (
-    <div className="flex h-[100dvh] flex-col bg-background overflow-hidden touch-none" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+    <motion.div
+      className="flex h-[100dvh] flex-col bg-background overflow-hidden touch-none"
+      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: "easeOut" }}
+    >
       <OfflineBanner visible={!isOnline} />
 
       <header
@@ -257,6 +284,6 @@ function Discover() {
       </main>
 
       <BottomNav />
-    </div>
+    </motion.div>
   );
 }
