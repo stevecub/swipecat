@@ -9,6 +9,7 @@ import { StreakBadge } from "@/components/streak-badge";
 import { LevelProgress } from "@/components/level-progress";
 import { LevelUpCelebration } from "@/components/level-up-celebration";
 import { DailyDropBanner } from "@/components/daily-drop-banner";
+import { DailyDropComplete } from "@/components/daily-drop-complete";
 import { SharePrompt, useSharePrompt } from "@/components/share-prompt";
 import { BottomNav } from "@/components/bottom-nav";
 import { OfflineBanner } from "@/components/offline-banner";
@@ -81,15 +82,26 @@ function Discover() {
   const { levelInfo, justLeveledUp, recordSwipeForLevel, dismissLevelUp } = useLevel();
 
   // ─── Daily Drop ─────────────────────────────────────────────────────────────
-  const { dailyProducts, formattedCountdown, hasNewDrop, markSeen: markDropSeen } = useDailyDrop(rawProducts);
+  const { dailyProducts, hasNewDrop, markSeen: markDropSeen } = useDailyDrop(rawProducts);
   const [dailyDropActive, setDailyDropActive] = useState(false);
+  const [dropSwipeCount, setDropSwipeCount] = useState(0);
+  const [showDropComplete, setShowDropComplete] = useState(false);
+
+  // How many daily drop products the user hasn't swiped yet in this session
+  const dropRemaining = Math.max(0, dailyProducts.length - dropSwipeCount);
 
   const handleActivateDrop = useCallback(() => {
     setDailyDropActive(true);
+    setDropSwipeCount(0);
     markDropSeen();
   }, [markDropSeen]);
 
   const handleDeactivateDrop = useCallback(() => {
+    setDailyDropActive(false);
+  }, []);
+
+  const handleDropComplete = useCallback(() => {
+    setShowDropComplete(false);
     setDailyDropActive(false);
   }, []);
   // ─────────────────────────────────────────────────────────────────────────────
@@ -183,15 +195,25 @@ function Discover() {
     if (action === "like") {
       like(product.id);
       recordLike(product);
-      onLikeForShare(product); // trigger share prompt check
+      onLikeForShare(product);
     } else {
       pass(product.id);
       recordPass(product);
     }
     setSwipeCount((prev) => prev + 1);
     recordSwipe();
-    recordSwipeForLevel(); // track XP for leveling
+    recordSwipeForLevel();
     excludeAtBuildRef.current.add(product.id);
+
+    // Track daily drop progress
+    if (dailyDropActive) {
+      const newDropCount = dropSwipeCount + 1;
+      setDropSwipeCount(newDropCount);
+      // Trigger completion celebration when all drop products are swiped
+      if (newDropCount >= dailyProducts.length && dailyProducts.length > 0) {
+        setTimeout(() => setShowDropComplete(true), 400);
+      }
+    }
   };
 
   const handleVisibleIds = (ids: string[]) => {
@@ -201,7 +223,12 @@ function Discover() {
   const showOfflineState = rawProducts.length === 0 && (!isOnline || loadFailed);
 
   // Determine which products to show in the deck
-  const activeProducts = dailyDropActive ? dailyProducts : queue;
+  // When in daily drop mode, only show products not yet swiped in this session
+  const dropQueue = useMemo(
+    () => dailyProducts.slice(dropSwipeCount),
+    [dailyProducts, dropSwipeCount],
+  );
+  const activeProducts = dailyDropActive ? dropQueue : queue;
 
   // If onboarding hasn't been completed, render the onboarding flow
   if (!onboarded) {
@@ -260,10 +287,10 @@ function Discover() {
       <main className="relative flex-1 px-5 pb-20">
         {/* Daily Drop banner */}
         <DailyDropBanner
-          formattedCountdown={formattedCountdown}
           hasNewDrop={hasNewDrop}
           isActive={dailyDropActive}
           dropCount={dailyProducts.length}
+          remaining={dropRemaining}
           onActivate={handleActivateDrop}
           onDeactivate={handleDeactivateDrop}
         />
@@ -277,6 +304,7 @@ function Discover() {
               onAction={handleAction}
               onVisibleIds={handleVisibleIds}
               premarkWindow={PREMARK_WINDOW}
+              isDailyDrop={dailyDropActive}
             />
           ) : rawProducts.length > 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
@@ -307,6 +335,12 @@ function Discover() {
         visible={justLeveledUp}
         levelInfo={levelInfo}
         onDismiss={dismissLevelUp}
+      />
+
+      {/* Daily Drop complete celebration */}
+      <DailyDropComplete
+        visible={showDropComplete}
+        onDismiss={handleDropComplete}
       />
     </motion.div>
   );

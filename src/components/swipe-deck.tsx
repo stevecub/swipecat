@@ -31,6 +31,7 @@ export function SwipeCard({
   stackIndex,
   dragProgress, // 0→1 from the top card, drives background card reveal
   onDragProgress, // callback to report drag progress to parent
+  isDailyDrop = false,
 }: {
   product: Product;
   onSwipe: (action: Action) => void;
@@ -38,6 +39,7 @@ export function SwipeCard({
   stackIndex: number;
   dragProgress: number; // simple number now, not a MotionValue
   onDragProgress?: (progress: number) => void;
+  isDailyDrop?: boolean;
 }) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -297,6 +299,18 @@ export function SwipeCard({
           </>
         )}
 
+        {/* Daily Drop badge — top-left corner */}
+        {isDailyDrop && (
+          <motion.span
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 400, damping: 20 }}
+            className="absolute left-4 top-4 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-white shadow-md"
+          >
+            ✨ Daily Drop
+          </motion.span>
+        )}
+
         <div className="absolute right-4 top-4 flex flex-col items-end gap-1.5">
           {/* Golden "Top Pick" badge — only shown on top-rated products */}
           {isGolden && (
@@ -402,11 +416,13 @@ export function SwipeDeck({
   onAction,
   onVisibleIds,
   premarkWindow = 3,
+  isDailyDrop = false,
 }: {
   products: Product[];
   onAction: (product: Product, action: Action) => void;
   onVisibleIds?: (ids: string[]) => void;
   premarkWindow?: number;
+  isDailyDrop?: boolean;
 }) {
   const [index, setIndex] = useState(0);
   const visible = useMemo(() => products.slice(index, index + premarkWindow), [products, index, premarkWindow]);
@@ -468,6 +484,7 @@ export function SwipeDeck({
                 onSwipe={handle}
                 dragProgress={isTop ? 0 : dragProgress}
                 onDragProgress={isTop ? setDragProgress : undefined}
+                isDailyDrop={isDailyDrop}
               />
             );
           })}

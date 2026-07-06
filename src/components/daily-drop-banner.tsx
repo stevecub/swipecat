@@ -1,34 +1,37 @@
 /**
  * daily-drop-banner.tsx
  *
- * A tappable banner that appears above the swipe deck when today's
- * Daily Drop is available. Shows a countdown timer to midnight and
- * a "NEW" badge when the user hasn't seen today's drop yet.
+ * Tappable banner for the Daily Drop. Shows how many products remain
+ * in today's drop rather than a countdown to midnight — this creates
+ * a completion-drive (progress psychology) rather than abstract urgency.
  *
- * Tapping it switches the feed to show only the daily drop products.
+ * When active, collapses to a slim pill showing "✨ X of 15 remaining"
+ * with an X to exit back to the normal feed.
  */
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, Sparkles, X } from "lucide-react";
+import { Sparkles, X } from "lucide-react";
 
 type Props = {
-  formattedCountdown: string;
   hasNewDrop: boolean;
   isActive: boolean;
-  dropCount: number;
+  dropCount: number;       // total products in today's drop
+  remaining: number;       // how many the user hasn't swiped yet
   onActivate: () => void;
   onDeactivate: () => void;
 };
 
 export function DailyDropBanner({
-  formattedCountdown,
   hasNewDrop,
   isActive,
   dropCount,
+  remaining,
   onActivate,
   onDeactivate,
 }: Props) {
   if (dropCount === 0) return null;
+
+  const swiped = dropCount - remaining;
 
   return (
     <AnimatePresence>
@@ -39,6 +42,7 @@ export function DailyDropBanner({
         className="mb-2"
       >
         {!isActive ? (
+          /* ── Inactive: full CTA banner ── */
           <motion.button
             onClick={onActivate}
             className="relative flex w-full items-center gap-2.5 rounded-2xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 px-4 py-2.5 text-left text-white shadow-lg shadow-fuchsia-500/20"
@@ -59,25 +63,33 @@ export function DailyDropBanner({
                 )}
               </div>
               <p className="text-[11px] font-medium text-white/80">
-                {dropCount} hand-picked products. Gone at midnight.
+                {dropCount} hand-picked products — tap to explore
               </p>
             </div>
-            <div className="flex items-center gap-1 rounded-full bg-white/20 px-2 py-1 backdrop-blur">
-              <Clock className="h-3 w-3" />
-              <span className="text-[11px] font-bold tabular-nums">{formattedCountdown}</span>
-            </div>
+            {/* Progress indicator if partially swiped */}
+            {swiped > 0 ? (
+              <div className="flex items-center gap-1 rounded-full bg-white/20 px-2 py-1 backdrop-blur">
+                <span className="text-[11px] font-bold tabular-nums">{remaining} left</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 rounded-full bg-white/20 px-2 py-1 backdrop-blur">
+                <Sparkles className="h-3 w-3" />
+                <span className="text-[11px] font-bold">{dropCount} picks</span>
+              </div>
+            )}
           </motion.button>
         ) : (
+          /* ── Active: slim progress pill ── */
           <motion.div
-            className="flex w-full items-center justify-between rounded-2xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 px-4 py-2.5 text-white shadow-lg shadow-fuchsia-500/20"
-            layoutId="daily-drop-banner"
+            className="flex w-full items-center justify-between rounded-2xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 px-4 py-2 text-white shadow-lg shadow-fuchsia-500/20"
           >
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4" />
-              <span className="text-sm font-black">Daily Drop Active</span>
+              <span className="text-sm font-black">Daily Drop</span>
               <div className="flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 backdrop-blur">
-                <Clock className="h-3 w-3" />
-                <span className="text-[10px] font-bold tabular-nums">{formattedCountdown}</span>
+                <span className="text-[10px] font-bold tabular-nums">
+                  {swiped} of {dropCount}
+                </span>
               </div>
             </div>
             <button
