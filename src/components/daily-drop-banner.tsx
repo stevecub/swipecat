@@ -55,7 +55,7 @@ export function DailyDropBanner({
               duration: 0.5,
               ease: "easeInOut",
               repeat: Infinity,
-              repeatDelay: 3.5,
+              repeatDelay: 1.5,
             }}
           >
             <Sparkles className="h-5 w-5 flex-shrink-0" />

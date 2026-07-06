@@ -325,7 +325,7 @@ export function SwipeCard({
                 duration: 0.45,
                 ease: "easeInOut",
                 repeat: Infinity,
-                repeatDelay: 4,
+                repeatDelay: 1.5,
                 delay: 1,
               }}
               className="inline-flex items-center gap-1 rounded-full bg-amber-400 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-amber-900 shadow-md"
