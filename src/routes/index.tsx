@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState, useMemo } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Onboarding, hasCompletedOnboarding } from "@/components/onboarding";
 import { SwipeDeck } from "@/components/swipe-deck";
@@ -222,13 +222,11 @@ function Discover() {
 
   const showOfflineState = rawProducts.length === 0 && (!isOnline || loadFailed);
 
-  // Determine which products to show in the deck
-  // When in daily drop mode, only show products not yet swiped in this session
-  const dropQueue = useMemo(
-    () => dailyProducts.slice(dropSwipeCount),
-    [dailyProducts, dropSwipeCount],
-  );
-  const activeProducts = dailyDropActive ? dropQueue : queue;
+  // Determine which products to show in the deck.
+  // In daily drop mode we pass the FULL dailyProducts array and let the
+  // SwipeDeck's own internal index advance naturally. The dropSwipeCount
+  // state is only used for the banner counter and completion trigger.
+  const activeProducts = dailyDropActive ? dailyProducts : queue;
 
   // If onboarding hasn't been completed, render the onboarding flow
   if (!onboarded) {
