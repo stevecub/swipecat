@@ -6,6 +6,10 @@ import { SwipeDeck } from "@/components/swipe-deck";
 import { SwipeHints } from "@/components/swipe-hints";
 import { SwipeCounters } from "@/components/swipe-counters";
 import { StreakBadge } from "@/components/streak-badge";
+import { LevelProgress } from "@/components/level-progress";
+import { LevelUpCelebration } from "@/components/level-up-celebration";
+import { DailyDropBanner } from "@/components/daily-drop-banner";
+import { SharePrompt, useSharePrompt } from "@/components/share-prompt";
 import { BottomNav } from "@/components/bottom-nav";
 import { OfflineBanner } from "@/components/offline-banner";
 import { OfflineState } from "@/components/offline-state";
@@ -17,6 +21,8 @@ import { useSeen } from "@/hooks/use-seen";
 import { useNetwork } from "@/hooks/use-network";
 import { useStreak } from "@/hooks/use-streak";
 import { usePersonalization } from "@/hooks/use-personalization";
+import { useLevel } from "@/hooks/use-level";
+import { useDailyDrop } from "@/hooks/use-daily-drop";
 import { productMatchesCategories } from "@/lib/categories";
 
 export const Route = createFileRoute("/")({
@@ -54,8 +60,6 @@ const PREMARK_WINDOW = 3;
 
 function Discover() {
   // ─── Onboarding gate ─────────────────────────────────────────────────────────
-  // Check localStorage on mount. If the user hasn't completed onboarding,
-  // show the 3-screen flow. Once complete, transition into the main feed.
   const [onboarded, setOnboarded] = useState<boolean>(() => hasCompletedOnboarding());
 
   const handleOnboardingComplete = useCallback(() => {
@@ -74,43 +78,41 @@ function Discover() {
   const { isOnline } = useNetwork();
   const { streakCount, isAtRisk, recordSwipe } = useStreak();
   const { recordLike, recordPass, weightedSort } = usePersonalization();
+  const { levelInfo, justLeveledUp, recordSwipeForLevel, dismissLevelUp } = useLevel();
+
+  // ─── Daily Drop ─────────────────────────────────────────────────────────────
+  const { dailyProducts, formattedCountdown, hasNewDrop, markSeen: markDropSeen } = useDailyDrop(rawProducts);
+  const [dailyDropActive, setDailyDropActive] = useState(false);
+
+  const handleActivateDrop = useCallback(() => {
+    setDailyDropActive(true);
+    markDropSeen();
+  }, [markDropSeen]);
+
+  const handleDeactivateDrop = useCallback(() => {
+    setDailyDropActive(false);
+  }, []);
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  // ─── Share Prompt ───────────────────────────────────────────────────────────
+  const { promptProduct, onLike: onLikeForShare, dismiss: dismissSharePrompt } = useSharePrompt();
+  // ─────────────────────────────────────────────────────────────────────────────
 
   // ─── Stable queue ────────────────────────────────────────────────────────────
-  //
-  // THE ROOT CAUSE OF THE LOCKUP was that `filtered` was recomputed (and
-  // reshuffled) on every swipe because liked/passed IDs were in its dependency
-  // array. Each new array reference caused SwipeDeck to receive new `products`
-  // props, resetting its internal index to 0 and effectively restarting the deck.
-  //
-  // Fix: build the queue ONCE when rawProducts or selected categories change,
-  // then only APPEND new items when a background refresh brings fresh products.
-  // Liked/passed/seen items are excluded at queue-build time only — mid-session
-  // swipes do NOT trigger a rebuild.
-  //
-  // The deck itself calls onAction which removes the card from the top of the
-  // visible stack naturally via its own index counter.
-  //
   const [queue, setQueue] = useState<Product[]>([]);
   const queueBuiltRef = useRef(false);
-
-  // Snapshot of excluded IDs at the time the queue was built.
-  // We use a ref so the queue-build effect doesn't re-run when liked/passed change.
   const excludeAtBuildRef = useRef<Set<string>>(new Set());
 
   // Build (or rebuild) the queue when raw products or selected categories change.
-  // This does NOT depend on liked/passed/seen — those are captured once at build time.
   useEffect(() => {
     if (rawProducts.length === 0) return;
 
-    // Capture current exclusions at build time
     const excludeSet = new Set([...seenSet, ...lists.liked, ...lists.passed]);
     excludeAtBuildRef.current = excludeSet;
 
     const base = rawProducts.filter(
       (p) => !excludeSet.has(p.id) && productMatchesCategories(p.category, selected),
     );
-    // Use weighted sort (60% preference + 40% random) instead of pure shuffle
-    // so preferred categories surface earlier without killing discovery.
     setQueue(weightedSort(base));
     queueBuiltRef.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -147,8 +149,7 @@ function Discover() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOnline]);
 
-  // Auto-refresh: when fewer than REFETCH_THRESHOLD cards remain in the queue,
-  // fetch fresh products and APPEND only genuinely new ones — no reshuffle.
+  // Auto-refresh: when fewer than REFETCH_THRESHOLD cards remain in the queue
   const queueLengthRef = useRef(queue.length);
   queueLengthRef.current = queue.length;
 
@@ -161,8 +162,6 @@ function Discover() {
           const newOnes = fresh.filter((p) => !existingIds.has(p.id));
           fetchingRef.current = false;
           if (newOnes.length > 0) {
-            // Also append new items to the live queue directly so the deck
-            // doesn't need to rebuild — just gets more cards at the end.
             const exclude = excludeAtBuildRef.current;
             const toAdd = newOnes.filter(
               (p) => !exclude.has(p.id) && productMatchesCategories(p.category, selected),
@@ -183,15 +182,15 @@ function Discover() {
     cacheProducts(product);
     if (action === "like") {
       like(product.id);
-      recordLike(product); // update category preference score
+      recordLike(product);
+      onLikeForShare(product); // trigger share prompt check
     } else {
       pass(product.id);
-      recordPass(product); // slightly penalize category
+      recordPass(product);
     }
     setSwipeCount((prev) => prev + 1);
-    recordSwipe(); // update daily streak
-    // Also add to the build-time exclude set so if the queue ever rebuilds
-    // (e.g. category change) this item stays excluded
+    recordSwipe();
+    recordSwipeForLevel(); // track XP for leveling
     excludeAtBuildRef.current.add(product.id);
   };
 
@@ -200,6 +199,9 @@ function Discover() {
   };
 
   const showOfflineState = rawProducts.length === 0 && (!isOnline || loadFailed);
+
+  // Determine which products to show in the deck
+  const activeProducts = dailyDropActive ? dailyProducts : queue;
 
   // If onboarding hasn't been completed, render the onboarding flow
   if (!onboarded) {
@@ -245,6 +247,8 @@ function Discover() {
             </div>
           }
         />
+        {/* Level progress bar */}
+        <LevelProgress levelInfo={levelInfo} />
         <p className="mt-1 text-[10px] leading-tight text-muted-foreground">
           As an Amazon Associate we earn from qualifying purchases.{" "}
           <Link to="/about" className="underline">
@@ -254,12 +258,22 @@ function Discover() {
       </header>
 
       <main className="relative flex-1 px-5 pb-28">
+        {/* Daily Drop banner */}
+        <DailyDropBanner
+          formattedCountdown={formattedCountdown}
+          hasNewDrop={hasNewDrop}
+          isActive={dailyDropActive}
+          dropCount={dailyProducts.length}
+          onActivate={handleActivateDrop}
+          onDeactivate={handleDeactivateDrop}
+        />
+
         <div className="relative mx-auto aspect-[3/4.6] h-full max-h-[640px] w-full max-w-md">
           {showOfflineState ? (
             <OfflineState onRetry={loadProducts} />
-          ) : queue.length > 0 ? (
+          ) : activeProducts.length > 0 ? (
             <SwipeDeck
-              products={queue}
+              products={activeProducts}
               onAction={handleAction}
               onVisibleIds={handleVisibleIds}
               premarkWindow={PREMARK_WINDOW}
@@ -284,6 +298,16 @@ function Discover() {
       </main>
 
       <BottomNav />
+
+      {/* Share prompt overlay */}
+      <SharePrompt product={promptProduct} onDismiss={dismissSharePrompt} />
+
+      {/* Level-up celebration overlay */}
+      <LevelUpCelebration
+        visible={justLeveledUp}
+        levelInfo={levelInfo}
+        onDismiss={dismissLevelUp}
+      />
     </motion.div>
   );
 }
