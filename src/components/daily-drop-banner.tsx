@@ -47,6 +47,16 @@ export function DailyDropBanner({
             onClick={onActivate}
             className="relative flex w-full items-center gap-2.5 rounded-2xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 px-4 py-2.5 text-left text-white shadow-lg shadow-fuchsia-500/20"
             whileTap={{ scale: 0.97 }}
+            animate={{
+              rotate: [0, -1.5, 1.5, -1.5, 1.5, 0],
+              scale: [1, 1.01, 1.01, 1.01, 1.01, 1],
+            }}
+            transition={{
+              duration: 0.5,
+              ease: "easeInOut",
+              repeat: Infinity,
+              repeatDelay: 3.5,
+            }}
           >
             <Sparkles className="h-5 w-5 flex-shrink-0" />
             <div className="flex-1 min-w-0">
