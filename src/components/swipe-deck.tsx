@@ -407,7 +407,7 @@ export function SwipeCard({
               <svg viewBox="0 0 20 20" fill="#f87171" className="h-3 w-3" aria-hidden="true">
                 <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
               </svg>
-              <span className="text-[11px] font-semibold text-white">{likeCountStr} liked this</span>
+              <span className="text-[11px] font-semibold text-white">{likeCountStr} swipers liked this</span>
             </div>
             {isTop && (
               <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur">
