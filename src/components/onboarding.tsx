@@ -262,7 +262,6 @@ function DemoCard({
 function ScreenMechanic({ onNext }: { onNext: () => void }) {
   const [cardIndex, setCardIndex] = useState(0);
   const [swipeDir, setSwipeDir] = useState<"like" | "pass" | null>(null);
-  const [showCopy, setShowCopy] = useState(false);
   const [showButton, setShowButton] = useState(false);
   const confettiFiredRef = useRef(false);
 
@@ -278,17 +277,17 @@ function ScreenMechanic({ onNext }: { onNext: () => void }) {
     });
   }, []);
 
-  // Auto-play sequence
+  // Auto-play sequence — text shows immediately, animations start after a brief pause
   useEffect(() => {
-    // Step 1: swipe card 1 right (LIKE) at 1.0s
+    // Step 1: swipe card 1 right (LIKE) at 1.5s (give user time to read)
     const t1 = setTimeout(() => {
       setSwipeDir("like");
-    }, 1000);
+    }, 1500);
 
-    // Step 2: fire confetti at 1.4s (while card is mid-swipe)
+    // Step 2: fire confetti at 1.9s (while card is mid-swipe)
     const t2 = setTimeout(() => {
       fireConfetti();
-    }, 1400);
+    }, 1900);
 
     return () => {
       clearTimeout(t1);
@@ -301,10 +300,8 @@ function ScreenMechanic({ onNext }: { onNext: () => void }) {
     setSwipeDir(null);
     // Step 3: swipe card 2 left (PASS) at 1.0s after it appears
     setTimeout(() => setSwipeDir("pass"), 1000);
-    // Step 4: show copy
-    setTimeout(() => setShowCopy(true), 2200);
-    // Step 5: show button
-    setTimeout(() => setShowButton(true), 2800);
+    // Step 4: show button after second card swipes away
+    setTimeout(() => setShowButton(true), 2200);
   }, []);
 
   return (
@@ -316,6 +313,19 @@ function ScreenMechanic({ onNext }: { onNext: () => void }) {
       exit={{ opacity: 0, x: -60 }}
       transition={{ duration: 0.35 }}
     >
+      {/* Copy — shown immediately so user reads it before animations play */}
+      <motion.div
+        className="text-center"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+      >
+        <h2 className="text-2xl font-black leading-snug tracking-tight">
+          Swipe Right to save it.<br />Swipe Left to keep it.
+        </h2>
+        <p className="mt-2 text-base text-muted-foreground">That's literally it.</p>
+      </motion.div>
+
       {/* Card demo area */}
       <div className="relative mx-auto w-full max-w-[280px]" style={{ aspectRatio: "3/4.2" }}>
         <AnimatePresence>
@@ -351,29 +361,12 @@ function ScreenMechanic({ onNext }: { onNext: () => void }) {
         </AnimatePresence>
       </div>
 
-      {/* Copy */}
-      <AnimatePresence>
-        {showCopy && (
-          <motion.div
-            className="mt-6 text-center"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
-            <h2 className="text-2xl font-black leading-snug tracking-tight">
-              Swipe right to save it.<br />Swipe left to skip it.
-            </h2>
-            <p className="mt-2 text-base text-muted-foreground">That's literally it.</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* CTA */}
       <AnimatePresence>
         {showButton && (
           <motion.button
             onClick={onNext}
-            className="mt-6 w-full max-w-xs rounded-full bg-primary py-4 text-base font-black text-primary-foreground shadow-lg"
+            className="mt-4 w-full max-w-xs rounded-full bg-primary py-4 text-base font-black text-primary-foreground shadow-lg"
             initial={{ opacity: 0, scale: 0.88 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}

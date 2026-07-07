@@ -163,8 +163,8 @@
     -webkit-tap-highlight-color: transparent;
     -webkit-user-select: none;
     user-select: none;
-    /* Honor the notch / Dynamic Island */
-    padding-top: env(safe-area-inset-top);
+    /* Safe-area top is handled per-route via header inline styles.
+       Do NOT add body padding-top here — it shifts the fixed app shell down. */
   }
 
   input,

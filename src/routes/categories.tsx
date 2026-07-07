@@ -27,7 +27,7 @@ function Categories() {
   return (
     <div className="flex h-[100dvh] flex-col bg-background">
       <OfflineBanner visible={!isOnline} />
-      <header className="px-5 pt-5 pb-3">
+      <header className="px-5 pb-3" style={{ paddingTop: "max(1.25rem, env(safe-area-inset-top))" }}>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-black tracking-tight">Categories</h1>
