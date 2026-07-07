@@ -10,7 +10,7 @@ export function BottomNav() {
   ] as const;
 
   return (
-    <nav className="sticky bottom-0 z-30 border-t border-border bg-background/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
+    <nav className="shrink-0 z-30 border-t border-border bg-background/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
       <ul className="mx-auto flex max-w-md items-center justify-around px-6 py-1">
         {items.map((item) => {
           const Icon = item.icon;

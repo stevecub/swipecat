@@ -317,7 +317,7 @@ function Discover() {
         </p>
       </header>
 
-      <main className="relative flex-1 px-5 pb-20">
+      <main className="relative flex-1 min-h-0 px-5 pb-2">
         {/* Daily Drop banner — hidden once completed or manually dismissed */}
         {!isDropCompleted && !dropDismissed && (
           <DailyDropBanner
@@ -331,7 +331,7 @@ function Discover() {
           />
         )}
 
-        <div className="relative mx-auto aspect-[3/4.6] h-full max-h-[580px] w-full max-w-md">
+        <div className="relative mx-auto h-full w-full max-w-md">
           {showOfflineState ? (
             <OfflineState onRetry={loadProducts} />
           ) : activeProducts.length > 0 ? (
