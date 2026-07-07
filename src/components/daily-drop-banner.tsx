@@ -116,7 +116,7 @@ export function DailyDropBanner({
               </div>
             </div>
             <button
-              onClick={onDeactivate}
+              onClick={onDismiss ?? onDeactivate}
               className="rounded-full bg-white/20 p-1.5 backdrop-blur active:bg-white/30"
               aria-label="Exit Daily Drop"
             >
