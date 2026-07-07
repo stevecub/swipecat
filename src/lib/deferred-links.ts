@@ -28,20 +28,38 @@ export function buildShareLink(product: Product): string {
   return `${RESOLVE_LINK_URL}?p=${encodeURIComponent(productId)}`;
 }
 
+const ONBOARDING_KEY = "swipecat:onboarded:v1";
+
+/**
+ * Returns true only on the very first launch — the moment onboarding
+ * has just been completed and no prior claim was made.
+ * On Capacitor (native), this prevents the claim from re-firing if
+ * the user later clears browser data or reinstalls.
+ */
+function isFirstLaunch(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    // Already claimed before — not first launch
+    if (window.localStorage.getItem(CLAIMED_KEY)) return false;
+    // Onboarding not yet completed — too early to claim
+    if (window.localStorage.getItem(ONBOARDING_KEY) !== "true") return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Attempt to claim a deferred link on first app launch.
  * Returns the product_id if a matching link is found, or null otherwise.
- * Only runs once per device (uses localStorage flag).
+ *
+ * Guards:
+ * - Only runs once per device (localStorage flag)
+ * - Only runs after onboarding is completed (true first-launch signal)
+ *   This prevents false triggers on Capacitor if storage is cleared.
  */
 export async function claimDeferredLink(): Promise<string | null> {
-  if (typeof window === "undefined") return null;
-
-  try {
-    // Don't run if already claimed
-    if (window.localStorage.getItem(CLAIMED_KEY)) return null;
-  } catch {
-    return null;
-  }
+  if (!isFirstLaunch()) return null;
 
   try {
     const res = await fetch(CLAIM_LINK_URL, {

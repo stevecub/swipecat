@@ -114,11 +114,15 @@ function Discover() {
   // ─── Deferred Link Claim (first launch) ─────────────────────────────────────
   const [deferredProductId, setDeferredProductId] = useState<string | null>(null);
 
+  // Runs on mount AND when onboarding completes (onboarded flips true).
+  // claimDeferredLink() internally checks that onboarding is done + no prior
+  // claim exists, so it's safe to call multiple times — it no-ops if not first launch.
   useEffect(() => {
+    if (!onboarded) return;
     claimDeferredLink().then((productId) => {
       if (productId) setDeferredProductId(productId);
     });
-  }, []);
+  }, [onboarded]);
   // ─────────────────────────────────────────────────────────────────────────────
 
   // ─── Stable queue ────────────────────────────────────────────────────────────
