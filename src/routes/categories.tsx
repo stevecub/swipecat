@@ -56,7 +56,7 @@ function Categories() {
         </div>
       </header>
 
-      <main className="flex-1 min-h-0 overflow-y-auto px-4 pb-4">
+      <main className="flex-1 min-h-0 overflow-y-auto px-4 pb-16">
         <ul className="grid grid-cols-2 gap-3 pt-2">
           {CATEGORIES.map((c) => {
             const active = selected.includes(c.id);
