@@ -81,18 +81,24 @@ export function SharePrompt({ product, onDismiss }: Props) {
   const handleShare = async () => {
     if (!product) return;
 
-    const shareText = `I found this on SwipeCat and thought you'd love it! ${product.title}`;
     const shareUrl = buildShareLink(product);
+    const shareText = `I found this on SwipeCat and thought you'd love it! ${product.title}\n${shareUrl}`;
 
     if (navigator.share) {
       try {
         await navigator.share({
           title: product.title,
           text: shareText,
-          url: shareUrl,
         });
       } catch {
-        // User cancelled
+        // User cancelled — fall through to dismiss
+      }
+    } else {
+      // Fallback: copy to clipboard
+      try {
+        await navigator.clipboard.writeText(shareText);
+      } catch {
+        // Ignore clipboard errors
       }
     }
     onDismiss();
