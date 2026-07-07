@@ -19,6 +19,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
 import { Route as AdminCapacitorRouteImport } from './routes/admin.capacitor'
+import { Route as AdminLinksRouteImport } from './routes/admin.links'
 
 const _rootCapacitorRoute = _rootCapacitorRouteImport.update({
   id: '/__root/capacitor',
@@ -70,6 +71,11 @@ const AdminCapacitorRoute = AdminCapacitorRouteImport.update({
   path: '/capacitor',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminLinksRoute = AdminLinksRouteImport.update({
+  id: '/links',
+  path: '/links',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/capacitor': typeof _rootCapacitorRoute
   '/admin/capacitor': typeof AdminCapacitorRoute
+  '/admin/links': typeof AdminLinksRoute
   '/product/$id': typeof ProductIdRoute
 }
 export interface FileRoutesByTo {
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/capacitor': typeof _rootCapacitorRoute
   '/admin/capacitor': typeof AdminCapacitorRoute
+  '/admin/links': typeof AdminLinksRoute
   '/product/$id': typeof ProductIdRoute
 }
 export interface FileRoutesById {
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/__root/capacitor': typeof _rootCapacitorRoute
   '/admin/capacitor': typeof AdminCapacitorRoute
+  '/admin/links': typeof AdminLinksRoute
   '/product/$id': typeof ProductIdRoute
 }
 export interface FileRouteTypes {
@@ -120,6 +129,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/capacitor'
     | '/admin/capacitor'
+    | '/admin/links'
     | '/product/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -132,6 +142,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/capacitor'
     | '/admin/capacitor'
+    | '/admin/links'
     | '/product/$id'
   id:
     | '__root__'
@@ -144,6 +155,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/__root/capacitor'
     | '/admin/capacitor'
+    | '/admin/links'
     | '/product/$id'
   fileRoutesById: FileRoutesById
 }
@@ -231,15 +243,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCapacitorRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/links': {
+      id: '/admin/links'
+      path: '/links'
+      fullPath: '/admin/links'
+      preLoaderRoute: typeof AdminLinksRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
   AdminCapacitorRoute: typeof AdminCapacitorRoute
+  AdminLinksRoute: typeof AdminLinksRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminCapacitorRoute: AdminCapacitorRoute,
+  AdminLinksRoute: AdminLinksRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)

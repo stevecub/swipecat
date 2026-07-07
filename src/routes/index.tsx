@@ -25,6 +25,7 @@ import { usePersonalization } from "@/hooks/use-personalization";
 import { useLevel } from "@/hooks/use-level";
 import { useDailyDrop } from "@/hooks/use-daily-drop";
 import { productMatchesCategories } from "@/lib/categories";
+import { claimDeferredLink } from "@/lib/deferred-links";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -110,6 +111,16 @@ function Discover() {
   const { promptProduct, onLike: onLikeForShare, dismiss: dismissSharePrompt } = useSharePrompt();
   // ─────────────────────────────────────────────────────────────────────────────
 
+  // ─── Deferred Link Claim (first launch) ─────────────────────────────────────
+  const [deferredProductId, setDeferredProductId] = useState<string | null>(null);
+
+  useEffect(() => {
+    claimDeferredLink().then((productId) => {
+      if (productId) setDeferredProductId(productId);
+    });
+  }, []);
+  // ─────────────────────────────────────────────────────────────────────────────
+
   // ─── Stable queue ────────────────────────────────────────────────────────────
   const [queue, setQueue] = useState<Product[]>([]);
   const queueBuiltRef = useRef(false);
@@ -125,10 +136,23 @@ function Discover() {
     const base = rawProducts.filter(
       (p) => !excludeSet.has(p.id) && productMatchesCategories(p.category, selected),
     );
-    setQueue(weightedSort(base));
+    let sorted = weightedSort(base);
+
+    // If a deferred link was claimed, move that product to the front
+    if (deferredProductId) {
+      const deferredProduct = rawProducts.find(
+        (p) => p.asin === deferredProductId || p.id === deferredProductId,
+      );
+      if (deferredProduct) {
+        sorted = [deferredProduct, ...sorted.filter((p) => p.id !== deferredProduct.id)];
+      }
+      setDeferredProductId(null); // Only boost once
+    }
+
+    setQueue(sorted);
     queueBuiltRef.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rawProducts, selected]);
+  }, [rawProducts, selected, deferredProductId]);
   // ─────────────────────────────────────────────────────────────────────────────
 
   // Load products on mount

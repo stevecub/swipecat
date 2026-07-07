@@ -15,7 +15,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Share2 } from "lucide-react";
-import { buildBuyUrl, type Product } from "@/lib/products";
+import { type Product } from "@/lib/products";
+import { buildShareLink } from "@/lib/deferred-links";
 
 const SHOW_EVERY_N_LIKES = 5;
 const AUTO_DISMISS_MS = 5000;
@@ -80,8 +81,8 @@ export function SharePrompt({ product, onDismiss }: Props) {
   const handleShare = async () => {
     if (!product) return;
 
-    const shareText = `Check this out on Amazon! ${product.title}`;
-    const shareUrl = buildBuyUrl(product);
+    const shareText = `I found this on SwipeCat and thought you'd love it! ${product.title}`;
+    const shareUrl = buildShareLink(product);
 
     if (navigator.share) {
       try {

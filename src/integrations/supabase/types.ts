@@ -83,9 +83,45 @@ export type Database = {
         }
         Relationships: []
       }
+      deferred_links: {
+        Row: {
+          id: string
+          fingerprint: string
+          product_id: string
+          claimed: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          fingerprint: string
+          product_id: string
+          claimed?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          fingerprint?: string
+          product_id?: string
+          claimed?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      deferred_link_stats: {
+        Row: {
+          shares_24h: number
+          shares_7d: number
+          shares_30d: number
+          claims_24h: number
+          claims_7d: number
+          claims_30d: number
+          total_shares: number
+          total_claims: number
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
@@ -94,6 +130,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      cleanup_expired_deferred_links: {
+        Args: Record<PropertyKey, never>
+        Returns: void
       }
     }
     Enums: {
