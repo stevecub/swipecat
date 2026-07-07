@@ -302,18 +302,10 @@ export function SwipeCard({
         {/* Daily Drop badge — top-left corner with wiggle */}
         {isDailyDrop && (
           <motion.span
-            initial={{ scale: 0.8, opacity: 0, rotate: 0 }}
-            animate={{
-              rotate: [0, -4, 4, -3, 3, -1, 0],
-              scale: [0.8, 1.08, 1.05, 1.03, 1.01, 1, 1],
-              opacity: 1,
-            }}
-            transition={{
-              duration: 0.7,
-              ease: "easeOut",
-              delay: 0.3,
-            }}
-            className="absolute left-4 top-4 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-white shadow-md"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 400, damping: 20, delay: 0.3 }}
+            className="absolute left-4 top-4 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-white shadow-md animate-badge-jiggle"
           >
             ✨ Daily Drop
           </motion.span>
@@ -323,18 +315,10 @@ export function SwipeCard({
           {/* Golden "Top Pick" badge — only shown on top-rated products */}
           {isGolden && (
             <motion.span
-              initial={{ scale: 0.8, opacity: 0, rotate: 0 }}
-              animate={{
-                rotate: [0, -3, 3, -2, 2, -1, 0],
-                scale: [0.8, 1.08, 1.05, 1.03, 1.01, 1, 1],
-                opacity: 1,
-              }}
-              transition={{
-                duration: 0.6,
-                ease: "easeOut",
-                delay: 0.6,
-              }}
-              className="inline-flex items-center gap-1 rounded-full bg-amber-400 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-amber-900 shadow-md"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 400, damping: 20, delay: 0.6 }}
+              className="inline-flex items-center gap-1 rounded-full bg-amber-400 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-amber-900 shadow-md animate-badge-jiggle"
             >
               ⭐ TOP PICK
             </motion.span>
