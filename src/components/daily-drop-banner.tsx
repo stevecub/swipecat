@@ -19,6 +19,7 @@ type Props = {
   remaining: number;       // how many the user hasn't swiped yet
   onActivate: () => void;
   onDeactivate: () => void;
+  onDismiss?: () => void;  // hide the banner entirely for the day
 };
 
 export function DailyDropBanner({
@@ -28,6 +29,7 @@ export function DailyDropBanner({
   remaining,
   onActivate,
   onDeactivate,
+  onDismiss,
 }: Props) {
   if (dropCount === 0) return null;
 
@@ -58,6 +60,17 @@ export function DailyDropBanner({
               repeatDelay: 1.5,
             }}
           >
+            {/* Dismiss X */}
+            {onDismiss && (
+              <span
+                role="button"
+                aria-label="Dismiss Daily Drop"
+                onClick={(e) => { e.stopPropagation(); onDismiss(); }}
+                className="absolute -right-1.5 -top-1.5 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-white/90 text-fuchsia-600 shadow-sm active:bg-white"
+              >
+                <X className="h-3 w-3" />
+              </span>
+            )}
             <Sparkles className="h-5 w-5 flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">

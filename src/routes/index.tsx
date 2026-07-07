@@ -87,6 +87,7 @@ function Discover() {
   const [dailyDropActive, setDailyDropActive] = useState(false);
   const [dropSwipeCount, setDropSwipeCount] = useState(0);
   const [showDropComplete, setShowDropComplete] = useState(false);
+  const [dropDismissed, setDropDismissed] = useState(false);
 
   // How many daily drop products the user hasn't swiped yet in this session
   const dropRemaining = Math.max(0, dailyProducts.length - dropSwipeCount);
@@ -103,6 +104,11 @@ function Discover() {
 
   const handleDropComplete = useCallback(() => {
     setShowDropComplete(false);
+    setDailyDropActive(false);
+  }, []);
+
+  const handleDismissDrop = useCallback(() => {
+    setDropDismissed(true);
     setDailyDropActive(false);
   }, []);
   // ─────────────────────────────────────────────────────────────────────────────
@@ -312,8 +318,8 @@ function Discover() {
       </header>
 
       <main className="relative flex-1 px-5 pb-20">
-        {/* Daily Drop banner — hidden once the drop is fully completed for the day */}
-        {!isDropCompleted && (
+        {/* Daily Drop banner — hidden once completed or manually dismissed */}
+        {!isDropCompleted && !dropDismissed && (
           <DailyDropBanner
             hasNewDrop={hasNewDrop}
             isActive={dailyDropActive}
@@ -321,6 +327,7 @@ function Discover() {
             remaining={dropRemaining}
             onActivate={handleActivateDrop}
             onDeactivate={handleDeactivateDrop}
+            onDismiss={handleDismissDrop}
           />
         )}
 
