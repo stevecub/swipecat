@@ -5,7 +5,9 @@ const config: CapacitorConfig = {
   appName: "SwipeCat",
   webDir: "dist-capacitor",
   ios: {
-    contentInset: "always",
+    // "automatic" lets the WebView extend edge-to-edge; CSS env() handles insets.
+    // "always" was causing double safe-area padding (native + CSS).
+    contentInset: "automatic",
     backgroundColor: "#FFFFFF",
     limitsNavigationsToAppBoundDomains: false,
   },
@@ -23,7 +25,9 @@ const config: CapacitorConfig = {
     },
     StatusBar: {
       style: "DARK",
-      overlaysWebView: false,
+      // true = WebView renders behind the status bar (edge-to-edge).
+      // CSS env(safe-area-inset-top) in header handles the notch/Dynamic Island.
+      overlaysWebView: true,
     },
     LocalNotifications: {
       // iOS: show badge, play sound, and display as banner + in notification center
