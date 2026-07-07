@@ -299,12 +299,22 @@ export function SwipeCard({
           </>
         )}
 
-        {/* Daily Drop badge — top-left corner */}
+        {/* Daily Drop badge — top-left corner with wiggle */}
         {isDailyDrop && (
           <motion.span
             initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 400, damping: 20 }}
+            animate={{
+              rotate: [0, -3, 3, -3, 3, 0],
+              scale: [1, 1.05, 1.05, 1.05, 1.05, 1],
+              opacity: 1,
+            }}
+            transition={{
+              duration: 0.5,
+              ease: "easeInOut",
+              repeat: Infinity,
+              repeatDelay: 2.5,
+              delay: 0.5,
+            }}
             className="absolute left-4 top-4 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-white shadow-md"
           >
             ✨ Daily Drop
