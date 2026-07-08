@@ -169,18 +169,20 @@ function ScreenHook({ onNext }: { onNext: () => void }) {
 
 const DEMO_PRODUCTS = [
   {
-    title: "Wireless Noise-Cancelling Headphones",
-    price: "$79.99",
+    title: "Sony WH-1000XM5 Noise-Cancelling Headphones",
+    price: "$279.99",
     category: "Electronics",
-    color: "bg-indigo-100",
+    color: "bg-gradient-to-br from-slate-800 to-slate-900",
     emoji: "🎧",
+    darkText: true,
   },
   {
-    title: "Stainless Steel Water Bottle",
-    price: "$24.99",
-    category: "Fitness",
-    color: "bg-teal-100",
-    emoji: "💧",
+    title: "Giant Inflatable Rubber Duck (6 ft)",
+    price: "$34.99",
+    category: "Novelty",
+    color: "bg-gradient-to-br from-yellow-200 to-yellow-300",
+    emoji: "🧤",
+    darkText: false,
   },
 ];
 
@@ -223,8 +225,14 @@ function DemoCard({
     >
       <div className={`relative h-full w-full overflow-hidden rounded-[2rem] ${product.color} shadow-[0_20px_50px_-15px_rgba(0,0,0,0.25)] ring-1 ring-border`}>
         {/* Emoji placeholder */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-[100px]">{product.emoji}</span>
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+          <span className="text-[110px] drop-shadow-lg">{product.emoji}</span>
+          {product.darkText && (
+            <span className="text-xs font-bold text-white/60 tracking-widest uppercase">Premium Audio</span>
+          )}
+          {!product.darkText && (
+            <span className="text-xs font-bold text-yellow-700 tracking-widest uppercase">🦆 Quack Quack</span>
+          )}
         </div>
 
         {/* Like tint */}

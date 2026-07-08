@@ -13,7 +13,10 @@
 import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
+import { Share } from "@capacitor/share";
 import type { LevelInfo } from "@/hooks/use-level";
+
+const APP_STORE_URL = "https://apps.apple.com/app/swipecat/id6783462851";
 
 type Props = {
   visible: boolean;
@@ -57,15 +60,27 @@ export function LevelUpCelebration({ visible, levelInfo, onDismiss }: Props) {
   }, [visible]);
 
   const handleShare = async () => {
-    const shareText = `I just hit Level ${levelInfo.level}: ${levelInfo.emoji} ${levelInfo.title} on SwipeCat! 🎉`;
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: "SwipeCat Level Up!",
-          text: shareText,
-        });
-      } catch {
-        // User cancelled or share failed
+    const shareTitle = "SwipeCat Level Up!";
+    const shareText = `I just hit Level ${levelInfo.level}: ${levelInfo.emoji} ${levelInfo.title} on SwipeCat! 🎉\nDownload it here: ${APP_STORE_URL}`;
+    try {
+      await Share.share({
+        title: shareTitle,
+        text: shareText,
+        url: APP_STORE_URL,
+        dialogTitle: shareTitle,
+      });
+    } catch (err: any) {
+      if (err?.message?.toLowerCase().includes("cancel")) {
+        onDismiss();
+        return;
+      }
+      // Fallback to Web Share API
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: shareTitle, text: shareText });
+        } catch {
+          // User cancelled
+        }
       }
     }
     onDismiss();
