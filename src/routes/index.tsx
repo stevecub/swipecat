@@ -330,7 +330,7 @@ function Discover() {
           />
         )}
 
-        <div className="relative mx-auto h-full w-full max-w-md">
+        <div className="relative mx-auto w-full max-w-md" style={{ height: "calc(100% - 0.5rem)" }}>
           {showOfflineState ? (
             <OfflineState onRetry={loadProducts} />
           ) : activeProducts.length > 0 ? (

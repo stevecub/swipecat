@@ -47,13 +47,25 @@ function ScreenHook({ onNext }: { onNext: () => void }) {
       exit={{ opacity: 0, x: -60 }}
       transition={{ duration: 0.35 }}
     >
-      {/* Hero card */}
+      {/* Hero card — sways left and right to hint at the swipe mechanic */}
       <motion.div
         className="relative w-full max-w-[300px] overflow-hidden rounded-[2rem] shadow-[0_24px_60px_-10px_rgba(0,0,0,0.3)]"
         style={{ aspectRatio: "3/4" }}
         initial={{ y: 80, rotate: -4, opacity: 0, scale: 0.92 }}
-        animate={{ y: 0, rotate: -2, opacity: 1, scale: 1 }}
-        transition={{ type: "spring", stiffness: 260, damping: 22, delay: 0.1 }}
+        animate={{
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          rotate: [0, -6, 6, -4, 4, -2, 0],
+          x: [0, -20, 20, -14, 14, -6, 0],
+        }}
+        transition={{
+          y: { type: "spring", stiffness: 260, damping: 22, delay: 0.1 },
+          opacity: { duration: 0.3, delay: 0.1 },
+          scale: { type: "spring", stiffness: 260, damping: 22, delay: 0.1 },
+          rotate: { duration: 3, ease: "easeInOut", repeat: Infinity, repeatDelay: 0.5, delay: 1 },
+          x: { duration: 3, ease: "easeInOut", repeat: Infinity, repeatDelay: 0.5, delay: 1 },
+        }}
       >
         <img
           src="/onboarding-hero.jpg"
@@ -315,7 +327,7 @@ function ScreenMechanic({ onNext }: { onNext: () => void }) {
     >
       {/* Copy — shown immediately so user reads it before animations play */}
       <motion.div
-        className="text-center"
+        className="text-center mt-10"
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
