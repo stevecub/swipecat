@@ -5,7 +5,9 @@ const config: CapacitorConfig = {
   appName: "SwipeCat",
   webDir: "dist-capacitor",
   ios: {
-    contentInset: "always",
+    // "never" = WebView fills the entire screen edge-to-edge.
+    // Safe areas are handled purely in CSS via env(safe-area-inset-*).
+    contentInset: "never",
     backgroundColor: "#FFFFFF",
     limitsNavigationsToAppBoundDomains: false,
   },
@@ -20,7 +22,8 @@ const config: CapacitorConfig = {
     },
     StatusBar: {
       style: "DARK",
-      overlaysWebView: false,
+      // true = WebView renders behind the status bar (full-screen).
+      overlaysWebView: true,
     },
     LocalNotifications: {
       presentationOptions: ["badge", "sound", "banner", "list"],

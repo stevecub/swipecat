@@ -10,7 +10,18 @@ export function BottomNav() {
   ] as const;
 
   return (
-    <nav className="shrink-0 z-30 border-t border-border bg-background">
+    <nav
+      style={{
+        position: "fixed",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 9999,
+        borderTop: "1px solid hsl(var(--border))",
+        backgroundColor: "hsl(var(--background))",
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+      }}
+    >
       <ul className="mx-auto flex max-w-md items-center justify-around px-6 py-2">
         {items.map((item) => {
           const Icon = item.icon;
