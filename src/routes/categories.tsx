@@ -25,9 +25,9 @@ function Categories() {
   const count = selected.length;
 
   return (
-    <div className="flex h-[100dvh] flex-col bg-background">
+    <div className="flex h-full flex-col bg-background">
       <OfflineBanner visible={!isOnline} />
-      <header className="px-5 pb-3" style={{ paddingTop: "max(1.25rem, env(safe-area-inset-top))" }}>
+      <header className="px-5 pt-3 pb-3">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-black tracking-tight">Categories</h1>
@@ -56,7 +56,7 @@ function Categories() {
         </div>
       </header>
 
-      <main className="flex-1 min-h-0 overflow-y-auto px-4 pb-16">
+      <main className="flex-1 min-h-0 overflow-y-auto px-4">
         <ul className="grid grid-cols-2 gap-3 pt-2">
           {CATEGORIES.map((c) => {
             const active = selected.includes(c.id);

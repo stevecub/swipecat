@@ -274,18 +274,14 @@ function Discover() {
 
   return (
     <motion.div
-      className="flex h-[100dvh] flex-col bg-background overflow-hidden touch-none"
-      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+      className="flex h-full flex-col bg-background overflow-hidden touch-none"
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: "easeOut" }}
     >
       <OfflineBanner visible={!isOnline} />
 
-      <header
-        className="px-5 pb-2"
-        style={{ paddingTop: "max(1.25rem, env(safe-area-inset-top))" }}
-      >
+      <header className="px-5 pt-3 pb-2">
         <SwipeCounters
           likeCount={lists.liked.length}
           passCount={lists.passed.length}
@@ -317,7 +313,7 @@ function Discover() {
         </p>
       </header>
 
-      <main className="relative flex-1 min-h-0 px-5 pb-16">
+      <main className="relative flex-1 min-h-0 px-5">
         {/* Daily Drop banner — hidden once completed or manually dismissed */}
         {!isDropCompleted && !dropDismissed && (
           <DailyDropBanner
@@ -362,7 +358,6 @@ function Discover() {
       </main>
 
       <BottomNav />
-      {/* BottomNav is position:fixed so it doesn't participate in flex layout */}
 
       {/* Share prompt overlay */}
       <SharePrompt product={promptProduct} onDismiss={dismissSharePrompt} />

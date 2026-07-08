@@ -57,9 +57,9 @@ function Passed() {
   };
 
   return (
-    <div className="flex h-[100dvh] flex-col bg-background">
+    <div className="flex h-full flex-col bg-background">
       <OfflineBanner visible={!isOnline} />
-      <header className="px-5 pb-3" style={{ paddingTop: "max(1.25rem, env(safe-area-inset-top))" }}>
+      <header className="px-5 pt-3 pb-3">
         <div className="flex items-baseline justify-between">
           <h1 className="text-2xl font-black tracking-tight">Passed</h1>
           <div className="flex items-center gap-3">
@@ -81,7 +81,7 @@ function Passed() {
         </p>
       </header>
 
-      <main className="flex-1 min-h-0 overflow-y-auto px-4 pb-16">
+      <main className="flex-1 min-h-0 overflow-y-auto px-4">
         {items.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
             <X className="h-10 w-10 text-muted-foreground" />
