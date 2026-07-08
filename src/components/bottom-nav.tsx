@@ -17,12 +17,17 @@ export function BottomNav() {
         left: 0,
         right: 0,
         zIndex: 9999,
-        borderTop: "1px solid hsl(var(--border))",
-        backgroundColor: "hsl(var(--background))",
         paddingBottom: "env(safe-area-inset-bottom, 0px)",
       }}
+      className="border-t border-border bg-background"
     >
-      <ul className="mx-auto flex max-w-md items-center justify-around px-6 py-2">
+      {/* Solid opaque background layer — ensures no transparency regardless of theme */}
+      <div
+        className="absolute inset-0"
+        style={{ backgroundColor: "oklch(0.985 0.005 90)" }}
+        aria-hidden
+      />
+      <ul className="relative mx-auto flex max-w-md items-center justify-around px-6 py-2">
         {items.map((item) => {
           const Icon = item.icon;
           return (
