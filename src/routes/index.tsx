@@ -83,11 +83,10 @@ function Discover() {
   const { levelInfo, justLeveledUp, recordSwipeForLevel, dismissLevelUp } = useLevel();
 
   // ─── Daily Drop ─────────────────────────────────────────────────────────────
-  const { dailyProducts, hasNewDrop, isDropCompleted, markSeen: markDropSeen, markCompleted: markDropCompleted } = useDailyDrop(rawProducts);
+  const { dailyProducts, hasNewDrop, isDropCompleted, isDismissedToday, markSeen: markDropSeen, markCompleted: markDropCompleted, dismissForDay } = useDailyDrop(rawProducts);
   const [dailyDropActive, setDailyDropActive] = useState(false);
   const [dropSwipeCount, setDropSwipeCount] = useState(0);
   const [showDropComplete, setShowDropComplete] = useState(false);
-  const [dropDismissed, setDropDismissed] = useState(false);
 
   // How many daily drop products the user hasn't swiped yet in this session
   const dropRemaining = Math.max(0, dailyProducts.length - dropSwipeCount);
@@ -108,9 +107,9 @@ function Discover() {
   }, []);
 
   const handleDismissDrop = useCallback(() => {
-    setDropDismissed(true);
+    dismissForDay();
     setDailyDropActive(false);
-  }, []);
+  }, [dismissForDay]);
   // ─────────────────────────────────────────────────────────────────────────────
 
   // ─── Share Prompt ───────────────────────────────────────────────────────────
@@ -319,7 +318,7 @@ function Discover() {
 
       <main className="relative flex-1 min-h-0 px-5 pb-20">
         {/* Daily Drop banner — hidden once completed or manually dismissed */}
-        {!isDropCompleted && !dropDismissed && (
+        {!isDropCompleted && !isDismissedToday && (
           <DailyDropBanner
             hasNewDrop={hasNewDrop}
             isActive={dailyDropActive}

@@ -299,29 +299,19 @@ export function SwipeCard({
           </>
         )}
 
-        {/* Daily Drop badge — top-left corner with wiggle */}
+        {/* Daily Drop badge — top-left corner with jiggle */}
         {isDailyDrop && (
-          <motion.span
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 400, damping: 20, delay: 0.3 }}
-            className="absolute left-4 top-4 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-white shadow-md animate-badge-jiggle"
-          >
+          <span className="absolute left-4 top-4 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-white shadow-md animate-badge-jiggle">
             ✨ Daily Drop
-          </motion.span>
+          </span>
         )}
 
         <div className="absolute right-4 top-4 flex flex-col items-end gap-1.5">
           {/* Golden "Top Pick" badge — only shown on top-rated products */}
           {isGolden && (
-            <motion.span
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 400, damping: 20, delay: 0.6 }}
-              className="inline-flex items-center gap-1 rounded-full bg-amber-400 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-amber-900 shadow-md animate-badge-jiggle"
-            >
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-400 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-amber-900 shadow-md animate-badge-jiggle">
               ⭐ TOP PICK
-            </motion.span>
+            </span>
           )}
           <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-foreground backdrop-blur">
             {product.category}

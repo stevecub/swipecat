@@ -1,14 +1,15 @@
 /**
  * daily-drop-banner.tsx
  *
- * Tappable banner for the Daily Drop. Shows how many products remain
- * in today's drop rather than a countdown to midnight — this creates
- * a completion-drive (progress psychology) rather than abstract urgency.
+ * Tappable banner for the Daily Drop with a 10-second countdown.
+ * If the user doesn't tap within 10 seconds, the banner auto-dismisses.
+ * The countdown is visible on the banner to create urgency.
  *
- * When active, collapses to a slim pill showing "✨ X of 15 remaining"
- * with an X to exit back to the normal feed.
+ * X button on either state (inactive CTA or active pill) dismisses
+ * the banner for the entire day — no circular loop.
  */
 
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, X } from "lucide-react";
 
@@ -19,7 +20,7 @@ type Props = {
   remaining: number;       // how many the user hasn't swiped yet
   onActivate: () => void;
   onDeactivate: () => void;
-  onDismiss?: () => void;  // hide the banner entirely for the day
+  onDismiss: () => void;   // hide the banner for the day
 };
 
 export function DailyDropBanner({
@@ -31,6 +32,42 @@ export function DailyDropBanner({
   onDeactivate,
   onDismiss,
 }: Props) {
+  const [secondsLeft, setSecondsLeft] = useState(10);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hasActivatedRef = useRef(false);
+
+  // Track if user has activated the drop (stops the countdown)
+  useEffect(() => {
+    if (isActive) {
+      hasActivatedRef.current = true;
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }
+  }, [isActive]);
+
+  // 10-second countdown — only runs when banner is inactive and hasn't been activated yet
+  useEffect(() => {
+    if (hasActivatedRef.current || isActive) return;
+
+    timerRef.current = setInterval(() => {
+      setSecondsLeft((prev) => {
+        if (prev <= 1) {
+          // Time's up — auto-dismiss
+          if (timerRef.current) clearInterval(timerRef.current);
+          onDismiss();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isActive, onDismiss]);
+
   if (dropCount === 0) return null;
 
   const swiped = dropCount - remaining;
@@ -44,7 +81,7 @@ export function DailyDropBanner({
         className="mb-2"
       >
         {!isActive ? (
-          /* ── Inactive: full CTA banner ── */
+          /* ── Inactive: full CTA banner with countdown ── */
           <motion.button
             onClick={onActivate}
             className="relative flex w-full items-center gap-2.5 rounded-2xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 px-4 py-2.5 text-left text-white shadow-lg shadow-fuchsia-500/20"
@@ -60,17 +97,16 @@ export function DailyDropBanner({
               repeatDelay: 1.5,
             }}
           >
-            {/* Dismiss X */}
-            {onDismiss && (
-              <span
-                role="button"
-                aria-label="Dismiss Daily Drop"
-                onClick={(e) => { e.stopPropagation(); onDismiss(); }}
-                className="absolute -right-1.5 -top-1.5 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-white/90 text-fuchsia-600 shadow-sm active:bg-white"
-              >
-                <X className="h-3 w-3" />
-              </span>
-            )}
+            {/* Dismiss X — top right */}
+            <span
+              role="button"
+              aria-label="Dismiss Daily Drop"
+              onClick={(e) => { e.stopPropagation(); onDismiss(); }}
+              className="absolute -right-1.5 -top-1.5 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-white/90 text-fuchsia-600 shadow-sm active:bg-white"
+            >
+              <X className="h-3 w-3" />
+            </span>
+
             <Sparkles className="h-5 w-5 flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
@@ -89,17 +125,13 @@ export function DailyDropBanner({
                 {dropCount} hand-picked products — tap to explore
               </p>
             </div>
-            {/* Progress indicator if partially swiped */}
-            {swiped > 0 ? (
-              <div className="flex items-center gap-1 rounded-full bg-white/20 px-2 py-1 backdrop-blur">
-                <span className="text-[11px] font-bold tabular-nums">{remaining} left</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1 rounded-full bg-white/20 px-2 py-1 backdrop-blur">
-                <Sparkles className="h-3 w-3" />
-                <span className="text-[11px] font-bold">{dropCount} picks</span>
-              </div>
-            )}
+
+            {/* Countdown timer — visible urgency */}
+            <div className="flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-1 backdrop-blur">
+              <span className="text-[12px] font-black tabular-nums">
+                {secondsLeft}s
+              </span>
+            </div>
           </motion.button>
         ) : (
           /* ── Active: slim progress pill ── */
@@ -116,9 +148,9 @@ export function DailyDropBanner({
               </div>
             </div>
             <button
-              onClick={onDismiss ?? onDeactivate}
+              onClick={onDismiss}
               className="rounded-full bg-white/20 p-1.5 backdrop-blur active:bg-white/30"
-              aria-label="Exit Daily Drop"
+              aria-label="Dismiss Daily Drop"
             >
               <X className="h-3.5 w-3.5" />
             </button>

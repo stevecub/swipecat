@@ -182,16 +182,19 @@
 }
 
 
-/* Badge jiggle — subtle wiggle every 3 seconds, runs forever once the element is in the DOM */
+/* Badge jiggle — quick wiggle burst then 3-4s of stillness, repeating forever */
 @keyframes badge-jiggle {
-  0%, 85% { transform: rotate(0deg) scale(1); }
-  88% { transform: rotate(-3deg) scale(1.04); }
-  91% { transform: rotate(3deg) scale(1.04); }
-  94% { transform: rotate(-2deg) scale(1.02); }
-  97% { transform: rotate(2deg) scale(1.01); }
+  0% { transform: rotate(0deg) scale(1); }
+  2% { transform: rotate(-3deg) scale(1.05); }
+  4% { transform: rotate(3deg) scale(1.05); }
+  6% { transform: rotate(-2deg) scale(1.03); }
+  8% { transform: rotate(2deg) scale(1.02); }
+  10% { transform: rotate(-1deg) scale(1.01); }
+  12% { transform: rotate(0deg) scale(1); }
+  /* Still for the remaining ~88% of the 4s cycle = ~3.5s of stillness */
   100% { transform: rotate(0deg) scale(1); }
 }
 
 .animate-badge-jiggle {
-  animation: badge-jiggle 3s ease-in-out 1s infinite;
+  animation: badge-jiggle 4s ease-in-out 0.5s infinite;
 }

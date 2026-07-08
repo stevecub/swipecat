@@ -25,6 +25,7 @@ import type { Product } from "@/lib/products";
 const DAILY_DROP_SIZE = 15;
 const SEEN_KEY = "swipecat:daily-drop-seen:v1";
 const COMPLETED_KEY = "swipecat:daily-drop-completed:v1";
+const DISMISSED_KEY = "swipecat:daily-drop-dismissed:v1";
 
 /** Simple seeded pseudo-random number generator (mulberry32) */
 function seededRandom(seed: number) {
@@ -154,10 +155,31 @@ function markDropCompleted() {
   }
 }
 
+/** Check if the user dismissed the banner today */
+function hasDismissedToday(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(DISMISSED_KEY) === todayStr();
+  } catch {
+    return false;
+  }
+}
+
+/** Dismiss the banner for today */
+function dismissBannerForDay() {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(DISMISSED_KEY, todayStr());
+  } catch {
+    // Ignore
+  }
+}
+
 export function useDailyDrop(allProducts: Product[]) {
   const [countdown, setCountdown] = useState(secondsUntilMidnight());
   const [hasSeenDrop, setHasSeenDrop] = useState(() => hasSeenTodaysDrop());
   const [isDropCompleted, setIsDropCompleted] = useState(() => hasCompletedTodaysDrop());
+  const [isDismissedToday, setIsDismissedToday] = useState(() => hasDismissedToday());
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Countdown timer
@@ -191,13 +213,20 @@ export function useDailyDrop(allProducts: Product[]) {
     setHasSeenDrop(true);
   }, []);
 
+  const dismissForDay = useCallback(() => {
+    dismissBannerForDay();
+    setIsDismissedToday(true);
+  }, []);
+
   return {
     dailyProducts,
     countdown,
     formattedCountdown: formatCountdown(countdown),
     hasNewDrop,
     isDropCompleted,
+    isDismissedToday,
     markSeen,
     markCompleted,
+    dismissForDay,
   };
 }
