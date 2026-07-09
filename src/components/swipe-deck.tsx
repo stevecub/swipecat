@@ -254,7 +254,7 @@ export function SwipeCard({
         <img
           src={product.image}
           alt={product.title}
-          className="absolute inset-0 h-full w-full object-contain p-2 pt-14"
+          className="absolute inset-0 h-full w-full object-contain p-2 pt-14 pb-[140px]"
           draggable={false}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
@@ -318,7 +318,7 @@ export function SwipeCard({
           </span>
         </div>
 
-        <div className="absolute inset-x-0 bottom-0 p-3 text-white">
+        <div className="absolute inset-x-0 bottom-0 px-3 pb-3 pt-1.5 text-white">
           <div className="flex items-end justify-between gap-3">
             <div className="min-w-0">
               <h2 className="line-clamp-2 text-base font-bold leading-tight">{product.title}</h2>
