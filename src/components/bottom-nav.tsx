@@ -27,18 +27,18 @@ export function BottomNav() {
         style={{ backgroundColor: "oklch(0.985 0.005 90)" }}
         aria-hidden
       />
-      <ul className="relative mx-auto flex max-w-md items-center justify-around px-6 py-2">
+      <ul className="relative mx-auto flex max-w-md items-center justify-around px-6 py-1">
         {items.map((item) => {
           const Icon = item.icon;
           return (
             <li key={item.to}>
               <Link
                 to={item.to}
-                className={`flex flex-col items-center gap-0.5 px-4 py-1.5 text-xs font-medium transition ${
+                className={`flex flex-col items-center gap-0 px-4 py-1 text-[10px] font-medium transition ${
                   item.active ? "text-foreground" : "text-muted-foreground"
                 }`}
               >
-                <Icon className={`h-5 w-5 ${item.active ? "fill-foreground/10" : ""}`} />
+                <Icon className={`h-4 w-4 ${item.active ? "fill-foreground/10" : ""}`} />
                 {item.label}
               </Link>
             </li>

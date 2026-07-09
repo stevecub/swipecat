@@ -78,13 +78,13 @@ export function DailyDropBanner({
         initial={{ opacity: 0, y: -10, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ type: "spring", stiffness: 340, damping: 24 }}
-        className="mb-2"
+        className="mb-1"
       >
         {!isActive ? (
           /* ── Inactive: full CTA banner with countdown ── */
           <motion.button
             onClick={onActivate}
-            className="relative flex w-full items-center gap-2.5 rounded-2xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 px-4 py-2.5 text-left text-white shadow-lg shadow-fuchsia-500/20"
+            className="relative flex w-full items-center gap-2.5 rounded-2xl bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 px-4 py-1.5 text-left text-white shadow-lg shadow-fuchsia-500/20"
             whileTap={{ scale: 0.97 }}
             animate={{
               rotate: [0, -1.5, 1.5, -1.5, 1.5, 0],

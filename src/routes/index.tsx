@@ -316,7 +316,7 @@ function Discover() {
         </p>
       </header>
 
-      <main className="relative flex-1 min-h-0 px-5 pb-20">
+      <main className="relative flex-1 min-h-0 px-5 pb-16">
         {/* Daily Drop banner — hidden once completed or manually dismissed */}
         {!isDropCompleted && !isDismissedToday && (
           <DailyDropBanner

@@ -81,7 +81,7 @@ function Passed() {
         </p>
       </header>
 
-      <main className="flex-1 min-h-0 overflow-y-auto px-4 pb-20">
+      <main className="flex-1 min-h-0 overflow-y-auto px-4 pb-16">
         {items.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
             <X className="h-10 w-10 text-muted-foreground" />

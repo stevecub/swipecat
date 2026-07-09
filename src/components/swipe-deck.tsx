@@ -318,7 +318,7 @@ export function SwipeCard({
           </span>
         </div>
 
-        <div className="absolute inset-x-0 bottom-0 p-4 text-white">
+        <div className="absolute inset-x-0 bottom-0 p-3 text-white">
           <div className="flex items-end justify-between gap-3">
             <div className="min-w-0">
               <h2 className="line-clamp-2 text-base font-bold leading-tight">{product.title}</h2>
@@ -335,7 +335,7 @@ export function SwipeCard({
 
           {/* Rating + review count badge */}
           {product.rating != null && product.rating > 0 && (
-            <div className="mt-2 flex items-center gap-1.5">
+            <div className="mt-1 flex items-center gap-1.5">
               <div className="inline-flex items-center gap-1 rounded-full bg-black/40 px-2.5 py-1 backdrop-blur">
                 {/* Star icons — filled/half/empty based on rating */}
                 <span className="flex items-center gap-0.5">
@@ -381,7 +381,7 @@ export function SwipeCard({
           )}
 
           {/* Social proof + tap hint row */}
-          <div className="mt-2 flex items-center gap-2 flex-wrap">
+          <div className="mt-1 flex items-center gap-2 flex-wrap">
             {/* Social proof badge — always shown */}
             <div className="inline-flex items-center gap-1 rounded-full bg-black/40 px-2.5 py-1 backdrop-blur">
               <svg viewBox="0 0 20 20" fill="#f87171" className="h-3 w-3" aria-hidden="true">
