@@ -14,7 +14,7 @@ import { SharePrompt, useSharePrompt } from "@/components/share-prompt";
 import { BottomNav } from "@/components/bottom-nav";
 import { OfflineBanner } from "@/components/offline-banner";
 import { OfflineState } from "@/components/offline-state";
-import { getProducts, type Product } from "@/lib/products";
+import { getProducts, getProduct, type Product } from "@/lib/products";
 import { cacheProducts } from "@/lib/product-cache";
 import { useProductLists } from "@/hooks/use-product-lists";
 import { useCategories } from "@/hooks/use-categories";
@@ -170,6 +170,13 @@ function Discover() {
     const cached = loadQueueCache();
     const currentCatHash = categoriesHash(selected);
 
+    console.log("[SwipeCat:queue-build] cache found:", !!cached,
+      "| cacheConsumed:", cacheConsumedRef.current,
+      "| cached catHash:", cached?.categoriesHash,
+      "| current catHash:", currentCatHash,
+      "| cached currentId:", cached?.currentId,
+      "| cached queueIds count:", cached?.queueIds?.length);
+
     if (
       !cacheConsumedRef.current &&
       cached &&
@@ -189,12 +196,52 @@ function Discover() {
 
       if (restored.length > 0) {
         // Find the index of the product the user was looking at
+        let foundCurrentId = false;
         if (cached.currentId) {
           const idx = restored.findIndex((p) => p.id === cached.currentId);
-          setRestoredIndex(idx >= 0 ? idx : 0);
+          if (idx >= 0) {
+            foundCurrentId = true;
+            setRestoredIndex(idx);
+            console.log("[SwipeCat:queue-build] RESTORED currentId found at index:", idx);
+          } else {
+            // Safety net: currentId not in restored queue (possibly dropped from
+            // the 200-row fetch window). Fetch it directly and splice it in.
+            console.log("[SwipeCat:queue-build] currentId NOT in restored queue, fetching directly...");
+            cacheConsumedRef.current = true;
+            setQueue(restored);
+            setRestoredIndex(0);
+            queueBuiltRef.current = true;
+
+            // Async fallback: fetch the missing product and splice it in
+            getProduct(cached.currentId).then((product) => {
+              if (product && !excludeSet.has(product.id)) {
+                setQueue((prev) => {
+                  // Find where it should go (beginning of the queue at the old position)
+                  const alreadyExists = prev.findIndex((p) => p.id === product.id);
+                  if (alreadyExists >= 0) {
+                    // Already there (race condition), just restore index
+                    setRestoredIndex(alreadyExists);
+                    console.log("[SwipeCat:queue-build] fallback: product already in queue at:", alreadyExists);
+                    return prev;
+                  }
+                  // Insert at position 0 and set index to 0
+                  const updated = [product, ...prev];
+                  setRestoredIndex(0);
+                  console.log("[SwipeCat:queue-build] fallback: spliced missing product at index 0");
+                  return updated;
+                });
+              } else {
+                console.log("[SwipeCat:queue-build] fallback: could not fetch product, staying at index 0");
+              }
+            });
+            return;
+          }
         } else {
           setRestoredIndex(0);
         }
+        console.log("[SwipeCat:queue-build] CACHE RESTORE success | foundCurrentId:", foundCurrentId,
+          "| restoredIndex:", foundCurrentId ? restored.findIndex((p) => p.id === cached.currentId) : 0,
+          "| restored queue length:", restored.length);
         setQueue(restored);
         queueBuiltRef.current = true;
         cacheConsumedRef.current = true;
@@ -203,6 +250,7 @@ function Discover() {
     }
 
     // No valid cache (or cache consumed) — build fresh queue.
+    console.log("[SwipeCat:queue-build] NO CACHE RESTORE, building fresh queue");
     cacheConsumedRef.current = true;
     setRestoredIndex(0);
 

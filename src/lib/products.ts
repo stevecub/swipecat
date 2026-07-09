@@ -113,6 +113,7 @@ export async function getProducts(): Promise<Product[]> {
         .from("products")
         .select("id, title, description, price, currency, image, category, asin, rating, review_count")
         .eq("category", cat)
+        .order("id")
         .limit(PER_CATEGORY);
       if (error) {
         console.error(`getProducts [${cat}] failed:`, error.message);

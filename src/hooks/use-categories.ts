@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { loadSelectedCategories, saveSelectedCategories } from "@/lib/categories";
 
 export function useCategories() {
-  const [selected, setSelected] = useState<string[]>([]);
-
-  useEffect(() => {
-    setSelected(loadSelectedCategories());
-  }, []);
+  // Initialize synchronously from localStorage to avoid a race condition where
+  // the queue-build effect in index.tsx runs with an empty category selection
+  // before the real saved selection loads, which would mismatch the queue-cache's
+  // stored categoriesHash and cause unnecessary cache invalidation.
+  const [selected, setSelected] = useState<string[]>(() => loadSelectedCategories());
 
   const update = useCallback((next: string[]) => {
     setSelected(next);
