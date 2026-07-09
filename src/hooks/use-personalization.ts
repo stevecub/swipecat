@@ -2,22 +2,28 @@
  * use-personalization.ts
  *
  * Tracks per-category preference scores based on swipe history and exposes
- * a weighted sort function for the product queue.
+ * a balanced shuffle function for the product queue.
  *
  * Psychology: Relevance drives dopamine. When the feed feels like it "gets you",
- * users swipe more and stay longer. The 60/40 weighted shuffle keeps the feed
- * feeling personalized while preserving the variable-reward randomness that
- * makes swiping addictive.
+ * users swipe more and stay longer. But over-personalization kills discovery
+ * and makes the feed feel monotonous.
  *
  * Scoring rules (asymmetric — likes are a stronger signal than passes):
  *   like  → category score += 1.0
  *   pass  → category score -= 0.3
  *   scores are clamped to [-5, 20] to prevent runaway bias
  *
- * Weighted sort:
- *   sortKey = categoryScore * 0.6 + random(0, 1) * 0.4
- *   Higher sortKey = earlier in the queue.
- *   The 40% random component preserves discovery and variable-reward feel.
+ * Balanced shuffle (replaces the old 60/40 weighted sort):
+ *   1. Group products by category
+ *   2. Shuffle each category group independently (Fisher-Yates)
+ *   3. Interleave round-robin across categories so no single category
+ *      dominates any section of the feed
+ *   4. Within each round, apply a light personalization nudge:
+ *      categories with higher scores go slightly earlier in the round
+ *      (but still within the same ~N-card window, not pushed 200 cards ahead)
+ *
+ * This guarantees roughly equal representation of all selected categories
+ * while still rewarding engagement with a subtle ordering preference.
  */
 
 import { useCallback, useEffect, useState } from "react";
@@ -55,6 +61,15 @@ function clamp(val: number): number {
   return Math.max(MIN_SCORE, Math.min(MAX_SCORE, val));
 }
 
+/** Fisher-Yates shuffle — mutates in place */
+function shuffleInPlace<T>(arr: T[]): T[] {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 export function usePersonalization() {
   const [scores, setScores] = useState<CategoryScores>(() => load());
 
@@ -89,24 +104,78 @@ export function usePersonalization() {
   }, []);
 
   /**
-   * Weighted sort: 60% preference score + 40% random.
-   * Returns a new sorted array — does NOT mutate the input.
-   *
-   * Products in preferred categories bubble toward the front while
-   * the random component ensures discovery and variable reward.
+   * Reset all personalization scores — called when the user changes
+   * their category selections, signaling they want a fresh feed.
    */
-  const weightedSort = useCallback(
+  const resetScores = useCallback(() => {
+    const fresh: CategoryScores = {};
+    persist(fresh);
+    setScores(fresh);
+  }, []);
+
+  /**
+   * Balanced interleaving shuffle.
+   *
+   * Groups products by category, shuffles each group, then deals them
+   * round-robin so every category gets roughly equal representation
+   * throughout the feed. Within each round, categories with higher
+   * personalization scores go first (a subtle nudge, not domination).
+   *
+   * Returns a new array — does NOT mutate the input.
+   */
+  const balancedShuffle = useCallback(
     (products: Product[]): Product[] => {
-      return [...products].sort((a, b) => {
-        const scoreA = scores[a.category] ?? 0;
-        const scoreB = scores[b.category] ?? 0;
-        const keyA = scoreA * 0.6 + Math.random() * 0.4;
-        const keyB = scoreB * 0.6 + Math.random() * 0.4;
-        return keyB - keyA; // descending — higher score first
+      if (products.length === 0) return [];
+
+      // 1. Group by category
+      const groups: Record<string, Product[]> = {};
+      for (const p of products) {
+        const cat = p.category;
+        if (!groups[cat]) groups[cat] = [];
+        groups[cat].push(p);
+      }
+
+      // 2. Shuffle each group independently
+      const categoryKeys = Object.keys(groups);
+      for (const key of categoryKeys) {
+        shuffleInPlace(groups[key]);
+      }
+
+      // 3. Sort category keys by score (descending) for round ordering
+      //    This gives a light nudge — preferred categories appear slightly
+      //    earlier within each round, but all categories still appear in
+      //    every round.
+      const sortedKeys = [...categoryKeys].sort((a, b) => {
+        const sa = scores[a] ?? 0;
+        const sb = scores[b] ?? 0;
+        // Add a tiny random jitter so equal-score categories aren't always
+        // in the same alphabetical order
+        return (sb + Math.random() * 0.5) - (sa + Math.random() * 0.5);
       });
+
+      // 4. Interleave round-robin
+      const result: Product[] = [];
+      const pointers: Record<string, number> = {};
+      for (const key of sortedKeys) pointers[key] = 0;
+
+      const maxLen = Math.max(...sortedKeys.map((k) => groups[k].length));
+
+      for (let round = 0; round < maxLen; round++) {
+        for (const key of sortedKeys) {
+          if (pointers[key] < groups[key].length) {
+            result.push(groups[key][pointers[key]]);
+            pointers[key]++;
+          }
+        }
+      }
+
+      return result;
     },
     [scores],
   );
 
-  return { scores, recordLike, recordPass, weightedSort };
+  // Keep the old name as an alias for backward compat in case it's used elsewhere
+  const weightedSort = balancedShuffle;
+
+  return { scores, recordLike, recordPass, weightedSort, balancedShuffle, resetScores };
 }

@@ -79,7 +79,7 @@ function Discover() {
   const { seenSet, markSeen } = useSeen();
   const { isOnline } = useNetwork();
   const { streakCount, isAtRisk, recordSwipe } = useStreak();
-  const { recordLike, recordPass, weightedSort } = usePersonalization();
+  const { recordLike, recordPass, weightedSort, resetScores } = usePersonalization();
   const { levelInfo, justLeveledUp, recordSwipeForLevel, dismissLevelUp } = useLevel();
 
   // ─── Daily Drop ─────────────────────────────────────────────────────────────
@@ -134,6 +134,21 @@ function Discover() {
   const [queue, setQueue] = useState<Product[]>([]);
   const queueBuiltRef = useRef(false);
   const excludeAtBuildRef = useRef<Set<string>>(new Set());
+
+  // Reset personalization scores when the user changes category selections.
+  // This ensures a completely fresh, unbiased shuffle after every preference change.
+  const prevSelectedRef = useRef<string[]>(selected);
+  useEffect(() => {
+    const prev = prevSelectedRef.current;
+    // Only reset if the selection actually changed (not on initial mount)
+    if (prev.length > 0 || selected.length > 0) {
+      const changed = prev.length !== selected.length || prev.some((id) => !selected.includes(id));
+      if (changed && prev.length > 0) {
+        resetScores();
+      }
+    }
+    prevSelectedRef.current = selected;
+  }, [selected, resetScores]);
 
   // Build (or rebuild) the queue when raw products or selected categories change.
   useEffect(() => {
