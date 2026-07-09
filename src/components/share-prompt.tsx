@@ -8,7 +8,7 @@
  * Psychology:
  *  - Peak moment capture: the instant of liking is the emotional high
  *  - Being helpful: framed as "your friend would love this" not "share our app"
- *  - Low friction: one tap opens native share sheet
+ *  - Low friction: tap anywhere on the banner to open native share sheet
  *  - Intermittent: appears every 5th like to avoid banner blindness
  */
 
@@ -114,7 +114,11 @@ export function SharePrompt({ product, onDismiss }: Props) {
           exit={{ opacity: 0, y: 30, scale: 0.95 }}
           transition={{ type: "spring", stiffness: 320, damping: 24 }}
         >
-          <div className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.2)] ring-1 ring-black/5">
+          {/* Entire banner is clickable — triggers share */}
+          <button
+            onClick={handleShare}
+            className="relative flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-[0_8px_30px_-6px_rgba(0,0,0,0.2)] ring-1 ring-black/5 text-left active:scale-[0.98] transition-transform"
+          >
             {/* Product thumbnail */}
             <img
               src={product.image}
@@ -122,9 +126,9 @@ export function SharePrompt({ product, onDismiss }: Props) {
               className="h-11 w-11 flex-shrink-0 rounded-xl object-cover"
             />
 
-            {/* Text */}
+            {/* Text — full width, no truncation on the headline */}
             <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-bold text-gray-900 leading-tight truncate">
+              <p className="text-[12px] font-bold text-gray-900 leading-tight">
                 Know someone who'd love this?
               </p>
               <p className="text-[11px] text-gray-500 truncate mt-0.5">
@@ -132,24 +136,23 @@ export function SharePrompt({ product, onDismiss }: Props) {
               </p>
             </div>
 
-            {/* Share button */}
-            <button
-              onClick={handleShare}
-              className="flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 text-primary-foreground shadow-sm active:opacity-80"
-            >
-              <Share2 className="h-3.5 w-3.5" />
-              <span className="text-[11px] font-bold">Send</span>
-            </button>
+            {/* Share icon pill */}
+            <div className="flex-shrink-0 flex items-center justify-center rounded-full bg-primary p-2.5 text-primary-foreground shadow-sm">
+              <Share2 className="h-4 w-4" />
+            </div>
 
             {/* Dismiss X */}
-            <button
-              onClick={onDismiss}
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                onDismiss();
+              }}
               className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 text-gray-500 active:bg-gray-300"
               aria-label="Dismiss"
             >
               <span className="text-xs leading-none">&times;</span>
-            </button>
-          </div>
+            </div>
+          </button>
         </motion.div>
       )}
     </AnimatePresence>
