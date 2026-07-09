@@ -60,6 +60,29 @@ function shuffle<T>(arr: T[]): T[] {
 const REFETCH_THRESHOLD = 20;
 const PREMARK_WINDOW = 3;
 
+// ─── Deck position persistence ───────────────────────────────────────────────
+// Saves the current card index to sessionStorage so navigating to Liked/Passed
+// and back restores the exact card the user was on. Uses sessionStorage (not
+// localStorage) so the position resets when the app is fully closed.
+const DECK_INDEX_KEY = "swipecat:deck-index:v1";
+
+function saveDeckIndex(index: number) {
+  try { sessionStorage.setItem(DECK_INDEX_KEY, String(index)); } catch { /* ignore */ }
+}
+
+function loadDeckIndex(): number {
+  try {
+    const raw = sessionStorage.getItem(DECK_INDEX_KEY);
+    const n = raw !== null ? parseInt(raw, 10) : 0;
+    return isNaN(n) || n < 0 ? 0 : n;
+  } catch { return 0; }
+}
+
+function clearDeckIndex() {
+  try { sessionStorage.removeItem(DECK_INDEX_KEY); } catch { /* ignore */ }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 function Discover() {
   // ─── Onboarding gate ─────────────────────────────────────────────────────────
   const [onboarded, setOnboarded] = useState<boolean>(() => hasCompletedOnboarding());
@@ -135,8 +158,13 @@ function Discover() {
   const queueBuiltRef = useRef(false);
   const excludeAtBuildRef = useRef<Set<string>>(new Set());
 
+  // Restore deck position from sessionStorage on mount.
+  // This is a ref (not state) so it doesn't trigger extra renders.
+  const savedDeckIndexRef = useRef<number>(loadDeckIndex());
+
   // Reset personalization scores when the user changes category selections.
   // This ensures a completely fresh, unbiased shuffle after every preference change.
+  // Also clear the saved deck position so the user starts fresh in the new category set.
   const prevSelectedRef = useRef<string[]>(selected);
   useEffect(() => {
     const prev = prevSelectedRef.current;
@@ -145,6 +173,8 @@ function Discover() {
       const changed = prev.length !== selected.length || prev.some((id) => !selected.includes(id));
       if (changed && prev.length > 0) {
         resetScores();
+        clearDeckIndex();
+        savedDeckIndexRef.current = 0;
       }
     }
     prevSelectedRef.current = selected;
@@ -355,6 +385,10 @@ function Discover() {
               onVisibleIds={handleVisibleIds}
               premarkWindow={PREMARK_WINDOW}
               isDailyDrop={dailyDropActive}
+              // Restore position when navigating back from Liked/Passed/Categories.
+              // Only applies to the normal queue — daily drop always starts from 0.
+              initialIndex={dailyDropActive ? 0 : savedDeckIndexRef.current}
+              onIndexChange={dailyDropActive ? undefined : saveDeckIndex}
             />
           ) : rawProducts.length > 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">

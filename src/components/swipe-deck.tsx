@@ -405,16 +405,25 @@ export function SwipeDeck({
   products,
   onAction,
   onVisibleIds,
+  onIndexChange,
+  initialIndex = 0,
   premarkWindow = 3,
   isDailyDrop = false,
 }: {
   products: Product[];
   onAction: (product: Product, action: Action) => void;
   onVisibleIds?: (ids: string[]) => void;
+  /** Called whenever the deck advances to a new card — lets the parent persist position */
+  onIndexChange?: (index: number) => void;
+  /** Restore a previously saved deck position (0 = start) */
+  initialIndex?: number;
   premarkWindow?: number;
   isDailyDrop?: boolean;
 }) {
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(() => {
+    // Clamp to valid range — if the queue shrank since we last saved, start from 0
+    return initialIndex > 0 && initialIndex < products.length ? initialIndex : 0;
+  });
   const visible = useMemo(() => products.slice(index, index + premarkWindow), [products, index, premarkWindow]);
 
   // Track drag progress for background card reveal (0→1)
@@ -435,8 +444,12 @@ export function SwipeDeck({
     if (!current) return;
     onAction(current, action);
     setDragProgress(0);
-    setIndex((i) => i + 1);
-  }, [products, index, onAction]);
+    setIndex((i) => {
+      const next = i + 1;
+      onIndexChange?.(next);
+      return next;
+    });
+  }, [products, index, onAction, onIndexChange]);
 
   if (index >= products.length) {
     return (
