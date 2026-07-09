@@ -2,14 +2,13 @@
  * share-prompt.tsx
  *
  * A subtle, non-intrusive share prompt that slides up from the bottom
- * after the user swipes right (likes) a product. It appears intermittently
- * (not on every like) to avoid fatigue.
+ * when the user dwells on a card for 3+ seconds, indicating genuine interest.
  *
  * Psychology:
- *  - Peak moment capture: the instant of liking is the emotional high
+ *  - Dwell = interest: if someone stares at a card for 3s they're engaged
  *  - Being helpful: framed as "your friend would love this" not "share our app"
  *  - Low friction: tap anywhere on the banner to open native share sheet
- *  - Intermittent: appears every 5th like to avoid banner blindness
+ *  - Not spammy: only fires once per card, and has a cooldown between prompts
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -18,43 +17,57 @@ import { Share2 } from "lucide-react";
 import { type Product } from "@/lib/products";
 import { buildShareLink } from "@/lib/deferred-links";
 
-const SHOW_EVERY_N_LIKES = 5;
+/** How long the user must dwell on a card before showing the prompt (ms) */
+const DWELL_THRESHOLD_MS = 3000;
+/** Auto-dismiss the banner after this many ms */
 const AUTO_DISMISS_MS = 5000;
-const LIKE_COUNT_KEY = "swipecat:share-prompt-likes:v1";
-
-function getLikeCount(): number {
-  if (typeof window === "undefined") return 0;
-  try {
-    return parseInt(window.localStorage.getItem(LIKE_COUNT_KEY) || "0", 10);
-  } catch {
-    return 0;
-  }
-}
-
-function incrementLikeCount(): number {
-  const next = getLikeCount() + 1;
-  try {
-    window.localStorage.setItem(LIKE_COUNT_KEY, String(next));
-  } catch {
-    // Ignore
-  }
-  return next;
-}
+/** Minimum gap between consecutive share prompts (ms) to avoid fatigue */
+const COOLDOWN_MS = 30000;
 
 export function useSharePrompt() {
   const [promptProduct, setPromptProduct] = useState<Product | null>(null);
   const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dwellTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastPromptTimeRef = useRef<number>(0);
+  const currentCardIdRef = useRef<string | null>(null);
 
-  const onLike = useCallback((product: Product) => {
-    const count = incrementLikeCount();
-    if (count % SHOW_EVERY_N_LIKES === 0) {
+  /**
+   * Called by the parent whenever the top visible card changes.
+   * Starts a 3-second dwell timer. If the card is still showing after 3s,
+   * we surface the share prompt for that product.
+   */
+  const onCardVisible = useCallback((product: Product | null) => {
+    // Clear any existing dwell timer
+    if (dwellTimerRef.current) {
+      clearTimeout(dwellTimerRef.current);
+      dwellTimerRef.current = null;
+    }
+
+    if (!product) {
+      currentCardIdRef.current = null;
+      return;
+    }
+
+    // Don't re-trigger for the same card
+    if (product.id === currentCardIdRef.current) return;
+    currentCardIdRef.current = product.id;
+
+    // Start dwell timer
+    dwellTimerRef.current = setTimeout(() => {
+      // Check cooldown — don't spam the user
+      const now = Date.now();
+      if (now - lastPromptTimeRef.current < COOLDOWN_MS) return;
+
+      // Show the prompt
+      lastPromptTimeRef.current = now;
       setPromptProduct(product);
+
       // Auto-dismiss after 5 seconds
       if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
       dismissTimerRef.current = setTimeout(() => {
         setPromptProduct(null);
       }, AUTO_DISMISS_MS);
-    }
+    }, DWELL_THRESHOLD_MS);
   }, []);
 
   const dismiss = useCallback(() => {
@@ -66,10 +79,11 @@ export function useSharePrompt() {
   useEffect(() => {
     return () => {
       if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
+      if (dwellTimerRef.current) clearTimeout(dwellTimerRef.current);
     };
   }, []);
 
-  return { promptProduct, onLike, dismiss };
+  return { promptProduct, onCardVisible, dismiss };
 }
 
 type Props = {

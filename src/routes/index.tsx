@@ -116,7 +116,7 @@ function Discover() {
   // ─────────────────────────────────────────────────────────────────────────────
 
   // ─── Share Prompt ───────────────────────────────────────────────────────────
-  const { promptProduct, onLike: onLikeForShare, dismiss: dismissSharePrompt } = useSharePrompt();
+  const { promptProduct, onCardVisible: onCardVisibleForShare, dismiss: dismissSharePrompt } = useSharePrompt();
   // ─────────────────────────────────────────────────────────────────────────────
 
   // ─── Deferred Link Claim (first launch) ─────────────────────────────────────
@@ -340,7 +340,6 @@ function Discover() {
     if (action === "like") {
       like(product.id);
       recordLike(product);
-      onLikeForShare(product);
     } else {
       pass(product.id);
       recordPass(product);
@@ -364,6 +363,15 @@ function Discover() {
 
   const handleVisibleIds = (ids: string[]) => {
     markSeen(ids);
+    // Notify share prompt of the top visible card for dwell-time tracking.
+    // The first ID in the array is always the top (current) card.
+    const topId = ids[0];
+    if (topId) {
+      const topProduct = activeProducts.find((p) => p.id === topId) ?? null;
+      onCardVisibleForShare(topProduct);
+    } else {
+      onCardVisibleForShare(null);
+    }
   };
 
   // Persist the queue order + current product ID whenever the deck advances.
