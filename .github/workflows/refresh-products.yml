@@ -31,25 +31,16 @@ jobs:
           node-version: '22'
 
       - name: Install dependencies
-        uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 5
-          max_attempts: 3
-          command: npm install @supabase/supabase-js
+        run: npm install @supabase/supabase-js
 
       - name: Run product refresh
-        uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 20
-          max_attempts: 3
-          retry_wait_seconds: 30
-          command: |
-            MODE="${{ github.event.inputs.mode || 'daily' }}"
-            node scripts/refresh-products.mjs --mode $MODE
         env:
           RAINFOREST_API_KEY: ${{ secrets.RAINFOREST_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          MODE="${{ github.event.inputs.mode || 'daily' }}"
+          node scripts/refresh-products.mjs --mode $MODE
 
       - name: Commit rotation state
         run: |
