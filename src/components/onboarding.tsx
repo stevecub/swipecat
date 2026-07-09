@@ -202,19 +202,49 @@ function DemoCard({
 
   useEffect(() => {
     if (swipeDir === "like") {
-      animate(x, 400, {
+      // Step 1: jiggle right a little to hint the direction
+      animate(x, 28, {
         type: "spring",
-        stiffness: 200,
-        damping: 25,
-        onComplete: onAnimationComplete,
-      });
+        stiffness: 280,
+        damping: 12,
+      }).then(() =>
+        // Step 2: jiggle back slightly
+        animate(x, 10, {
+          type: "spring",
+          stiffness: 220,
+          damping: 14,
+        })
+      ).then(() =>
+        // Step 3: slow drift off to the right
+        animate(x, 520, {
+          type: "tween",
+          ease: [0.22, 0.68, 0.45, 1.0],
+          duration: 0.9,
+          onComplete: onAnimationComplete,
+        })
+      );
     } else if (swipeDir === "pass") {
-      animate(x, -400, {
+      // Step 1: jiggle left
+      animate(x, -28, {
         type: "spring",
-        stiffness: 200,
-        damping: 25,
-        onComplete: onAnimationComplete,
-      });
+        stiffness: 280,
+        damping: 12,
+      }).then(() =>
+        // Step 2: jiggle back slightly
+        animate(x, -10, {
+          type: "spring",
+          stiffness: 220,
+          damping: 14,
+        })
+      ).then(() =>
+        // Step 3: slow drift off to the left
+        animate(x, -520, {
+          type: "tween",
+          ease: [0.22, 0.68, 0.45, 1.0],
+          duration: 0.9,
+          onComplete: onAnimationComplete,
+        })
+      );
     }
   }, [swipeDir, x, onAnimationComplete]);
 
@@ -304,10 +334,10 @@ function ScreenMechanic({ onNext }: { onNext: () => void }) {
       setSwipeDir("like");
     }, 1500);
 
-    // Step 2: fire confetti at 1.9s (while card is mid-swipe)
+    // Step 2: fire confetti at 2.6s (jiggle takes ~0.4s, then slow drift starts)
     const t2 = setTimeout(() => {
       fireConfetti();
-    }, 1900);
+    }, 2600);
 
     return () => {
       clearTimeout(t1);
@@ -318,10 +348,10 @@ function ScreenMechanic({ onNext }: { onNext: () => void }) {
   const handleCard1Done = useCallback(() => {
     setCardIndex(1);
     setSwipeDir(null);
-    // Step 3: swipe card 2 left (PASS) at 1.0s after it appears
-    setTimeout(() => setSwipeDir("pass"), 1000);
-    // Step 4: show button after second card swipes away
-    setTimeout(() => setShowButton(true), 2200);
+    // Step 3: swipe card 2 left (PASS) at 1.2s after it appears
+    setTimeout(() => setSwipeDir("pass"), 1200);
+    // Step 4: show button after second card swipes away (~1.2s jiggle + 0.9s drift + buffer)
+    setTimeout(() => setShowButton(true), 3000);
   }, []);
 
   return (

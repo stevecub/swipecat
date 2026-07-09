@@ -184,7 +184,12 @@ function Discover() {
   useEffect(() => {
     if (rawProducts.length === 0) return;
 
-    const excludeSet = new Set([...seenSet, ...lists.liked, ...lists.passed]);
+    // Only exclude products the user has explicitly acted on (liked or passed).
+    // We intentionally do NOT exclude seenSet here — seen only tracks which cards
+    // entered the visible window, not which ones were swiped. Excluding seen cards
+    // would cause the queue to rebuild without the currently-visible card, breaking
+    // the card-position restore when navigating back from Liked/Passed/Categories.
+    const excludeSet = new Set([...lists.liked, ...lists.passed]);
     excludeAtBuildRef.current = excludeSet;
 
     const base = rawProducts.filter(
@@ -353,12 +358,6 @@ function Discover() {
         />
         {/* Level progress bar */}
         <LevelProgress levelInfo={levelInfo} />
-        <p className="mt-1 text-[10px] leading-tight text-muted-foreground">
-          As an Amazon Associate we earn from qualifying purchases.{" "}
-          <Link to="/about" className="underline">
-            Learn more
-          </Link>
-        </p>
       </header>
 
       <main className="relative flex-1 min-h-0 px-5 pb-16">
