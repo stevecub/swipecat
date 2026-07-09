@@ -138,9 +138,10 @@ function Discover() {
   const queueBuiltRef = useRef(false);
   const excludeAtBuildRef = useRef<Set<string>>(new Set());
 
-  // The initial index to pass to SwipeDeck on first render after mount.
-  // Computed once from the queue cache and then consumed.
-  const restoredIndexRef = useRef<number>(0);
+  // The initial index to pass to SwipeDeck. This is STATE (not a ref) so that
+  // when the queue-cache restores a position, SwipeDeck re-renders with the
+  // correct initialIndex and our useEffect inside SwipeDeck can sync to it.
+  const [restoredIndex, setRestoredIndex] = useState(0);
   const cacheConsumedRef = useRef(false);
 
   // Reset personalization scores AND clear the queue cache when categories change.
@@ -190,9 +191,9 @@ function Discover() {
         // Find the index of the product the user was looking at
         if (cached.currentId) {
           const idx = restored.findIndex((p) => p.id === cached.currentId);
-          restoredIndexRef.current = idx >= 0 ? idx : 0;
+          setRestoredIndex(idx >= 0 ? idx : 0);
         } else {
-          restoredIndexRef.current = 0;
+          setRestoredIndex(0);
         }
         setQueue(restored);
         queueBuiltRef.current = true;
@@ -203,7 +204,7 @@ function Discover() {
 
     // No valid cache (or cache consumed) — build fresh queue.
     cacheConsumedRef.current = true;
-    restoredIndexRef.current = 0;
+    setRestoredIndex(0);
 
     const base = rawProducts.filter(
       (p) => !excludeSet.has(p.id) && productMatchesCategories(p.category, selected),
@@ -410,7 +411,7 @@ function Discover() {
               isDailyDrop={dailyDropActive}
               // Restore position when navigating back from Liked/Passed/Categories.
               // Only applies to the normal queue.
-              initialIndex={dailyDropActive ? 0 : restoredIndexRef.current}
+              initialIndex={dailyDropActive ? 0 : restoredIndex}
               onIndexChange={dailyDropActive ? undefined : handleDeckIndexChange}
             />
           ) : rawProducts.length > 0 ? (

@@ -421,9 +421,35 @@ export function SwipeDeck({
   isDailyDrop?: boolean;
 }) {
   const [index, setIndex] = useState(() => {
-    // Clamp to valid range — if the queue shrank since we last saved, start from 0
     return initialIndex > 0 && initialIndex < products.length ? initialIndex : 0;
   });
+
+  // Re-sync index when products array identity changes and initialIndex is provided.
+  // This handles the case where the queue is restored from cache AFTER mount
+  // (products starts empty, then fills in with the cached order + initialIndex).
+  const prevProductsRef = useRef(products);
+  const prevInitialIndexRef = useRef(initialIndex);
+  useEffect(() => {
+    const productsChanged = products !== prevProductsRef.current;
+    const initialChanged = initialIndex !== prevInitialIndexRef.current;
+    prevProductsRef.current = products;
+    prevInitialIndexRef.current = initialIndex;
+
+    if ((productsChanged || initialChanged) && initialIndex > 0 && initialIndex < products.length) {
+      setIndex(initialIndex);
+    }
+  }, [products, initialIndex]);
+
+  // Persist position on mount (so navigating away immediately after landing
+  // still has the current card saved). Fire once when products are available.
+  const mountSavedRef = useRef(false);
+  useEffect(() => {
+    if (!mountSavedRef.current && products.length > 0 && onIndexChange) {
+      mountSavedRef.current = true;
+      onIndexChange(index);
+    }
+  }, [products.length, index, onIndexChange]);
+
   const visible = useMemo(() => products.slice(index, index + premarkWindow), [products, index, premarkWindow]);
 
   // Track drag progress for background card reveal (0→1)
