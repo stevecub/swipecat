@@ -26,6 +26,7 @@ import { useLevel } from "@/hooks/use-level";
 import { useDailyDrop } from "@/hooks/use-daily-drop";
 import { productMatchesCategories } from "@/lib/categories";
 import { claimDeferredLink } from "@/lib/deferred-links";
+import { saveQueueCache, loadQueueCache, clearQueueCache, categoriesHash } from "@/lib/queue-cache";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -60,28 +61,7 @@ function shuffle<T>(arr: T[]): T[] {
 const REFETCH_THRESHOLD = 20;
 const PREMARK_WINDOW = 3;
 
-// ─── Deck position persistence ───────────────────────────────────────────────
-// Saves the current card index to sessionStorage so navigating to Liked/Passed
-// and back restores the exact card the user was on. Uses sessionStorage (not
-// localStorage) so the position resets when the app is fully closed.
-const DECK_INDEX_KEY = "swipecat:deck-index:v1";
-
-function saveDeckIndex(index: number) {
-  try { sessionStorage.setItem(DECK_INDEX_KEY, String(index)); } catch { /* ignore */ }
-}
-
-function loadDeckIndex(): number {
-  try {
-    const raw = sessionStorage.getItem(DECK_INDEX_KEY);
-    const n = raw !== null ? parseInt(raw, 10) : 0;
-    return isNaN(n) || n < 0 ? 0 : n;
-  } catch { return 0; }
-}
-
-function clearDeckIndex() {
-  try { sessionStorage.removeItem(DECK_INDEX_KEY); } catch { /* ignore */ }
-}
-// ─────────────────────────────────────────────────────────────────────────────
+// (Deck position persistence is now handled by queue-cache.ts)
 
 function Discover() {
   // ─── Onboarding gate ─────────────────────────────────────────────────────────
@@ -153,28 +133,26 @@ function Discover() {
   }, [onboarded]);
   // ─────────────────────────────────────────────────────────────────────────────
 
-  // ─── Stable queue ────────────────────────────────────────────────────────────
+  // ─── Stable queue with full cache ───────────────────────────────────────────────
   const [queue, setQueue] = useState<Product[]>([]);
   const queueBuiltRef = useRef(false);
   const excludeAtBuildRef = useRef<Set<string>>(new Set());
 
-  // Restore deck position from sessionStorage on mount.
-  // This is a ref (not state) so it doesn't trigger extra renders.
-  const savedDeckIndexRef = useRef<number>(loadDeckIndex());
+  // The initial index to pass to SwipeDeck on first render after mount.
+  // Computed once from the queue cache and then consumed.
+  const restoredIndexRef = useRef<number>(0);
+  const cacheConsumedRef = useRef(false);
 
-  // Reset personalization scores when the user changes category selections.
-  // This ensures a completely fresh, unbiased shuffle after every preference change.
-  // Also clear the saved deck position so the user starts fresh in the new category set.
+  // Reset personalization scores AND clear the queue cache when categories change.
   const prevSelectedRef = useRef<string[]>(selected);
   useEffect(() => {
     const prev = prevSelectedRef.current;
-    // Only reset if the selection actually changed (not on initial mount)
     if (prev.length > 0 || selected.length > 0) {
       const changed = prev.length !== selected.length || prev.some((id) => !selected.includes(id));
       if (changed && prev.length > 0) {
         resetScores();
-        clearDeckIndex();
-        savedDeckIndexRef.current = 0;
+        clearQueueCache();
+        cacheConsumedRef.current = true; // don't try to restore stale cache
       }
     }
     prevSelectedRef.current = selected;
@@ -184,13 +162,48 @@ function Discover() {
   useEffect(() => {
     if (rawProducts.length === 0) return;
 
-    // Only exclude products the user has explicitly acted on (liked or passed).
-    // We intentionally do NOT exclude seenSet here — seen only tracks which cards
-    // entered the visible window, not which ones were swiped. Excluding seen cards
-    // would cause the queue to rebuild without the currently-visible card, breaking
-    // the card-position restore when navigating back from Liked/Passed/Categories.
     const excludeSet = new Set([...lists.liked, ...lists.passed]);
     excludeAtBuildRef.current = excludeSet;
+
+    // Try to restore from cache first (same categories, queue order preserved).
+    const cached = loadQueueCache();
+    const currentCatHash = categoriesHash(selected);
+
+    if (
+      !cacheConsumedRef.current &&
+      cached &&
+      cached.categoriesHash === currentCatHash &&
+      cached.queueIds.length > 0
+    ) {
+      // Rebuild the queue in the exact cached order using rawProducts as lookup.
+      const productMap = new Map(rawProducts.map((p) => [p.id, p]));
+      const restored: Product[] = [];
+      for (const id of cached.queueIds) {
+        const p = productMap.get(id);
+        // Only include if the product still exists and hasn't been liked/passed
+        if (p && !excludeSet.has(id)) {
+          restored.push(p);
+        }
+      }
+
+      if (restored.length > 0) {
+        // Find the index of the product the user was looking at
+        if (cached.currentId) {
+          const idx = restored.findIndex((p) => p.id === cached.currentId);
+          restoredIndexRef.current = idx >= 0 ? idx : 0;
+        } else {
+          restoredIndexRef.current = 0;
+        }
+        setQueue(restored);
+        queueBuiltRef.current = true;
+        cacheConsumedRef.current = true;
+        return;
+      }
+    }
+
+    // No valid cache (or cache consumed) — build fresh queue.
+    cacheConsumedRef.current = true;
+    restoredIndexRef.current = 0;
 
     const base = rawProducts.filter(
       (p) => !excludeSet.has(p.id) && productMatchesCategories(p.category, selected),
@@ -304,6 +317,17 @@ function Discover() {
     markSeen(ids);
   };
 
+  // Persist the queue order + current product ID whenever the deck advances.
+  // This is the key to restoring position after navigation.
+  const handleDeckIndexChange = useCallback((newIndex: number) => {
+    const currentProduct = queue[newIndex];
+    saveQueueCache(
+      queue.map((p) => p.id),
+      currentProduct?.id ?? null,
+      selected,
+    );
+  }, [queue, selected]);
+
   const showOfflineState = rawProducts.length === 0 && (!isOnline || loadFailed);
 
   // Determine which products to show in the deck.
@@ -385,9 +409,9 @@ function Discover() {
               premarkWindow={PREMARK_WINDOW}
               isDailyDrop={dailyDropActive}
               // Restore position when navigating back from Liked/Passed/Categories.
-              // Only applies to the normal queue — daily drop always starts from 0.
-              initialIndex={dailyDropActive ? 0 : savedDeckIndexRef.current}
-              onIndexChange={dailyDropActive ? undefined : saveDeckIndex}
+              // Only applies to the normal queue.
+              initialIndex={dailyDropActive ? 0 : restoredIndexRef.current}
+              onIndexChange={dailyDropActive ? undefined : handleDeckIndexChange}
             />
           ) : rawProducts.length > 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
