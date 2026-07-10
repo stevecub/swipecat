@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { AnimatePresence, motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { Link } from "@tanstack/react-router";
+import { Share } from "@capacitor/share";
 import { buildBuyUrl, type Product } from "@/lib/products";
+import { buildShareLink } from "@/lib/deferred-links";
 import { haptic } from "@/lib/haptics";
 import { getSocialProofCount, formatLikeCount } from "@/lib/social-proof";
 
@@ -24,12 +26,41 @@ const FLY_OFF_DISTANCE = 600;      // px the card travels off-screen
  * By using raw pointer events + manual x.set(), we have ZERO internal state
  * that can lock up. The card will ALWAYS respond to touch.
  */
+/** Long-press threshold in ms */
+const LONG_PRESS_MS = 500;
+
+/**
+ * Triggers the native share sheet for a product.
+ * Uses Capacitor Share plugin first, falls back to Web Share API.
+ */
+async function shareProduct(product: Product) {
+  const shareUrl = buildShareLink(product);
+  const shareText = `I found this on SwipeCat and thought you'd love it! ${product.title}`;
+  try {
+    await Share.share({
+      title: product.title,
+      text: shareText,
+      url: shareUrl,
+      dialogTitle: "Share this product",
+    });
+  } catch (err: any) {
+    if (err?.message?.toLowerCase().includes("cancel")) return;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: product.title, text: `${shareText}\n${shareUrl}` });
+      } catch {
+        // User cancelled
+      }
+    }
+  }
+}
+
 export function SwipeCard({
   product,
   onSwipe,
   isTop,
   stackIndex,
-  dragProgress, // 0→1 from the top card, drives background card reveal
+  dragProgress, // 0→ 1 from the top card, drives background card reveal
   onDragProgress, // callback to report drag progress to parent
   isDailyDrop = false,
 }: {
@@ -61,7 +92,13 @@ export function SwipeCard({
     velocityX: 0,        // estimated velocity
     pointerId: -1,       // which pointer we're tracking
     maxDist: 0,          // max distance moved (for tap detection)
+    longPressTriggered: false, // did we fire a long-press share?
   });
+
+  // Long-press timer ref
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Post-share cooldown: prevents the pointer-up after sharing from opening Amazon
+  const shareJustFiredRef = useRef(false);
 
   // Reset state when this card mounts or becomes the top card
   useEffect(() => {
@@ -127,7 +164,22 @@ export function SwipeCard({
     g.lastTime = performance.now();
     g.velocityX = 0;
     g.maxDist = 0;
-  }, [isTop]);
+    g.longPressTriggered = false;
+
+    // Start long-press timer
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = setTimeout(() => {
+      // Only fire if finger hasn't moved much (still a press, not a drag)
+      if (g.maxDist < 10 && g.active && !g.committed) {
+        g.longPressTriggered = true;
+        shareJustFiredRef.current = true;
+        void haptic("medium");
+        void shareProduct(product);
+        // Reset the cooldown after a short delay so future taps work normally
+        setTimeout(() => { shareJustFiredRef.current = false; }, 600);
+      }
+    }, LONG_PRESS_MS);
+  }, [isTop, product]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     const g = gestureRef.current;
@@ -137,6 +189,12 @@ export function SwipeCard({
     const dy = e.clientY - g.startY;
     const dist = Math.hypot(dx, dy);
     if (dist > g.maxDist) g.maxDist = dist;
+
+    // Cancel long-press if finger moves too far (it's a drag, not a press)
+    if (dist > 10 && longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
 
     // Set card position directly — no middleware, no internal state
     x.set(dx);
@@ -173,6 +231,17 @@ export function SwipeCard({
     const dx = e.clientX - g.startX;
     const elapsed = performance.now() - g.startTime;
 
+    // Cancel long-press timer on pointer up
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+
+    // If long-press just triggered share, don't do anything else
+    if (g.longPressTriggered || shareJustFiredRef.current) {
+      return;
+    }
+
     // Check if this was a tap (not a drag)
     if (g.maxDist < 10 && elapsed < 250) {
       // It's a tap — open the product
@@ -198,6 +267,11 @@ export function SwipeCard({
     if (e.pointerId !== g.pointerId) return;
     if (g.committed) return;
     g.active = false;
+    // Cancel long-press timer
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
     // Snap back on cancel
     animate(x, 0, { type: "spring", stiffness: 500, damping: 35 });
     animate(y, 0, { type: "spring", stiffness: 500, damping: 35 });
@@ -391,7 +465,7 @@ export function SwipeCard({
             </div>
             {isTop && (
               <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur">
-                Tap card to view on Amazon
+                Tap to view · Hold to share
               </div>
             )}
           </div>

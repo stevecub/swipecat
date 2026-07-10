@@ -10,7 +10,7 @@ import { LevelProgress } from "@/components/level-progress";
 import { LevelUpCelebration } from "@/components/level-up-celebration";
 import { DailyDropBanner } from "@/components/daily-drop-banner";
 import { DailyDropComplete } from "@/components/daily-drop-complete";
-import { SharePrompt, useSharePrompt } from "@/components/share-prompt";
+import { ShareHint, useShareHint } from "@/components/share-prompt";
 import { BottomNav } from "@/components/bottom-nav";
 import { OfflineBanner } from "@/components/offline-banner";
 import { OfflineState } from "@/components/offline-state";
@@ -116,7 +116,7 @@ function Discover() {
   // ─────────────────────────────────────────────────────────────────────────────
 
   // ─── Share Prompt ───────────────────────────────────────────────────────────
-  const { promptProduct, onCardVisible: onCardVisibleForShare, dismiss: dismissSharePrompt } = useSharePrompt();
+  const { showHint: showShareHint, onCardVisible: onCardVisibleForShare, dismissHint: dismissShareHint } = useShareHint();
   // ─────────────────────────────────────────────────────────────────────────────
 
   // ─── Deferred Link Claim (first launch) ─────────────────────────────────────
@@ -367,8 +367,7 @@ function Discover() {
     // The first ID in the array is always the top (current) card.
     const topId = ids[0];
     if (topId) {
-      const topProduct = activeProducts.find((p) => p.id === topId) ?? null;
-      onCardVisibleForShare(topProduct);
+      onCardVisibleForShare(topId);
     } else {
       onCardVisibleForShare(null);
     }
@@ -496,8 +495,8 @@ function Discover() {
       <BottomNav />
       {/* BottomNav is position:fixed so it overlays the bottom of the screen */}
 
-      {/* Share prompt overlay */}
-      <SharePrompt product={promptProduct} onDismiss={dismissSharePrompt} />
+      {/* Share hint tooltip — teaches long-press to share */}
+      <ShareHint visible={showShareHint} />
 
       {/* Level-up celebration overlay */}
       <LevelUpCelebration
