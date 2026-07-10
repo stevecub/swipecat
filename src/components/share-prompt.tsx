@@ -99,15 +99,25 @@ export function ShareHint({ visible }: Props) {
     <AnimatePresence>
       {visible && (
         <motion.div
-          className="fixed bottom-28 left-0 right-0 z-50 flex justify-center pointer-events-none"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 5 }}
-          transition={{ duration: 0.25 }}
+          className="fixed top-32 left-0 right-0 z-50 flex justify-center pointer-events-none"
+          initial={{ opacity: 0, scale: 0.8, y: -10 }}
+          animate={{
+            opacity: 1,
+            scale: 1,
+            y: 0,
+            rotate: [0, -3, 3, -2, 2, -1, 0],
+          }}
+          exit={{ opacity: 0, scale: 0.9, y: -8 }}
+          transition={{
+            opacity: { duration: 0.2 },
+            scale: { duration: 0.2 },
+            y: { duration: 0.2 },
+            rotate: { duration: 0.6, delay: 0.2, ease: "easeInOut" },
+          }}
         >
-          <div className="rounded-full bg-black/80 px-4 py-2 shadow-lg backdrop-blur">
-            <p className="text-xs font-medium text-white">
-              Long-press the card to share it
+          <div className="rounded-full bg-black/85 px-4 py-2 shadow-lg backdrop-blur-sm border border-white/20">
+            <p className="text-xs font-semibold text-white">
+              👆 Long-press to share this!
             </p>
           </div>
         </motion.div>
