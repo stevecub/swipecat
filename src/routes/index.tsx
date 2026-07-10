@@ -460,6 +460,10 @@ function Discover() {
             <OfflineState onRetry={loadProducts} />
           ) : activeProducts.length > 0 ? (
             <SwipeDeck
+              // Key forces a full remount when switching between Daily Drop and
+              // normal Discover. Without this, the deck's internal index carries
+              // over and Daily Drop can start mid-way through, running out early.
+              key={dailyDropActive ? "daily-drop" : "discover"}
               products={activeProducts}
               onAction={handleAction}
               onVisibleIds={handleVisibleIds}

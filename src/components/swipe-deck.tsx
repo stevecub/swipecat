@@ -483,14 +483,22 @@ export function SwipeDeck({
         <div className="text-5xl">✨</div>
         <h3 className="text-xl font-bold">You're all caught up</h3>
         <p className="text-sm text-muted-foreground">
-          Check back later for fresh picks, or browse what you liked.
+          Try adding more categories for a bigger selection, or browse what you liked.
         </p>
-        <Link
-          to="/liked"
-          className="mt-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
-        >
-          See liked items
-        </Link>
+        <div className="mt-2 flex gap-3">
+          <Link
+            to="/categories"
+            className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
+          >
+            Add categories
+          </Link>
+          <Link
+            to="/liked"
+            className="rounded-full bg-muted px-5 py-2.5 text-sm font-semibold text-foreground"
+          >
+            See liked items
+          </Link>
+        </div>
       </div>
     );
   }
