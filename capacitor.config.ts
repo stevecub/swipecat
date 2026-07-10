@@ -21,7 +21,9 @@ const config: CapacitorConfig = {
       showSpinner: false,
     },
     StatusBar: {
-      style: "DARK",
+      // "DEFAULT" adapts to the device appearance (dark text in light mode,
+      // light text in dark mode). We also set it programmatically at boot.
+      style: "DEFAULT",
       // true = WebView renders behind the status bar (full-screen).
       overlaysWebView: true,
     },

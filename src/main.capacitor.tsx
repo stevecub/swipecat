@@ -14,6 +14,7 @@ import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createRouter, createHashHistory } from "@tanstack/react-router";
 import { SplashScreen } from "@capacitor/splash-screen";
+import { StatusBar, Style } from "@capacitor/status-bar";
 
 import "./styles.css";
 import { initDailyNotifications } from "./lib/daily-notifications";
@@ -69,6 +70,13 @@ function hideSplash() {
   SplashScreen.hide({ fadeOutDuration: 300 }).catch(() => {
     // SplashScreen.hide() throws if called when no splash is showing (e.g. in browser)
     // Silently ignore this error
+  });
+  // Set status bar to dark text (Light style = dark text for light backgrounds).
+  // This ensures the clock, battery, and signal icons are visible against our
+  // cream/white app background. Uses Style.Default so it adapts if the user
+  // has their device in dark mode.
+  StatusBar.setStyle({ style: Style.Default }).catch(() => {
+    // Ignore — may fail in browser dev mode where the plugin isn't available
   });
   // Also hide our diagnostic boot overlay if present
   const bootEl = document.getElementById('boot-status');
