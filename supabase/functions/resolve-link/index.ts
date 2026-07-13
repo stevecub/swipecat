@@ -124,27 +124,36 @@ Deno.serve(async (req: Request) => {
   //    Try asin first (that's what buildShareLink uses), then fall back to id
   let product: ProductMeta = FALLBACK_META;
 
-  const { data: byAsin } = await supabase
+  console.log(`[resolve-link] Looking up product with param: "${productId}"`);
+  console.log(`[resolve-link] SUPABASE_URL: ${SUPABASE_URL ? "set" : "MISSING"}`);
+  console.log(`[resolve-link] SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY ? "set (" + SUPABASE_SERVICE_KEY.substring(0, 10) + "...)" : "MISSING"}`);
+
+  const { data: byAsin, error: asinError } = await supabase
     .from("products")
     .select("title, image, price, currency")
     .eq("asin", productId)
     .limit(1)
     .single();
 
+  console.log(`[resolve-link] ASIN lookup result:`, { data: byAsin, error: asinError?.message });
+
   if (byAsin) {
     product = byAsin as ProductMeta;
   } else {
     // Fall back to matching by id (UUID)
-    const { data: byId } = await supabase
+    const { data: byId, error: idError } = await supabase
       .from("products")
       .select("title, image, price, currency")
       .eq("id", productId)
       .limit(1)
       .single();
+    console.log(`[resolve-link] ID lookup result:`, { data: byId, error: idError?.message });
     if (byId) {
       product = byId as ProductMeta;
     }
   }
+
+  console.log(`[resolve-link] Final product:`, product);
 
   // Build OG values
   const ogTitle = escapeHtml(truncate(product.title, 90));

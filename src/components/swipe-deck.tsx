@@ -3,7 +3,6 @@ import { AnimatePresence, motion, useMotionValue, useTransform, animate } from "
 import { Link } from "@tanstack/react-router";
 import { Share } from "@capacitor/share";
 import { buildBuyUrl, type Product } from "@/lib/products";
-import { buildShareLink } from "@/lib/deferred-links";
 import { haptic } from "@/lib/haptics";
 import { getSocialProofCount, formatLikeCount } from "@/lib/social-proof";
 
@@ -34,11 +33,11 @@ const LONG_PRESS_MS = 500;
  * Uses Capacitor Share plugin first, falls back to Web Share API.
  */
 async function shareProduct(product: Product) {
-  const shareUrl = buildShareLink(product);
-  // Put the URL directly in the text so iMessage/WhatsApp generate a rich
-  // link preview. When `url` is passed separately on iOS, iMessage often
-  // renders it as a file attachment instead of a preview card.
-  const shareText = `I found this on SwipeCat and thought you'd love it! ${product.title}\n\n${shareUrl}`;
+  // Use the Amazon product URL directly — iMessage/WhatsApp auto-generate
+  // rich previews (image, title, price) for Amazon links. The Supabase edge
+  // function can't serve HTML on the free tier (rewrites to text/plain).
+  const shareUrl = buildBuyUrl(product);
+  const shareText = `I found this on SwipeCat and thought you'd love it!\n\n${shareUrl}`;
   try {
     await Share.share({
       title: product.title,
