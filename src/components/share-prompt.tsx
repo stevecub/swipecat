@@ -99,25 +99,23 @@ export function ShareHint({ visible }: Props) {
     <AnimatePresence>
       {visible && (
         <motion.div
-          className="fixed top-32 left-0 right-0 z-50 flex justify-center pointer-events-none"
-          initial={{ opacity: 0, scale: 0.8, y: -10 }}
+          className="fixed bottom-24 left-0 right-0 z-50 flex justify-center pointer-events-none"
+          initial={{ opacity: 0, y: 60 }}
           animate={{
-            opacity: 1,
-            scale: 1,
-            y: 0,
-            rotate: [0, -3, 3, -2, 2, -1, 0],
+            opacity: [0, 1, 1, 1, 1, 0],
+            y: [60, -10, -10, -10, -10, 60],
+            rotate: [0, 0, -3, 3, -2, 0],
           }}
-          exit={{ opacity: 0, scale: 0.9, y: -8 }}
+          exit={{ opacity: 0, y: 60 }}
           transition={{
-            opacity: { duration: 0.2 },
-            scale: { duration: 0.2 },
-            y: { duration: 0.2 },
-            rotate: { duration: 0.6, delay: 0.2, ease: "easeInOut" },
+            duration: 3,
+            times: [0, 0.12, 0.25, 0.75, 0.88, 1],
+            ease: "easeInOut",
           }}
         >
-          <div className="rounded-full bg-black/85 px-4 py-2 shadow-lg backdrop-blur-sm border border-white/20">
-            <p className="text-xs font-semibold text-white">
-              👆 Long-press to share this!
+          <div className="rounded-full bg-gradient-to-r from-fuchsia-600 to-pink-500 px-5 py-2.5 shadow-xl shadow-fuchsia-500/30 border border-white/25">
+            <p className="text-sm font-bold text-white tracking-wide">
+              👆 Long-press to share!
             </p>
           </div>
         </motion.div>
