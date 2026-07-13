@@ -35,19 +35,21 @@ const LONG_PRESS_MS = 500;
  */
 async function shareProduct(product: Product) {
   const shareUrl = buildShareLink(product);
-  const shareText = `I found this on SwipeCat and thought you'd love it! ${product.title}`;
+  // Put the URL directly in the text so iMessage/WhatsApp generate a rich
+  // link preview. When `url` is passed separately on iOS, iMessage often
+  // renders it as a file attachment instead of a preview card.
+  const shareText = `I found this on SwipeCat and thought you'd love it! ${product.title}\n\n${shareUrl}`;
   try {
     await Share.share({
       title: product.title,
       text: shareText,
-      url: shareUrl,
       dialogTitle: "Share this product",
     });
   } catch (err: any) {
     if (err?.message?.toLowerCase().includes("cancel")) return;
     if (navigator.share) {
       try {
-        await navigator.share({ title: product.title, text: `${shareText}\n${shareUrl}` });
+        await navigator.share({ title: product.title, text: shareText });
       } catch {
         // User cancelled
       }
