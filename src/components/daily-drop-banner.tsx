@@ -1,8 +1,9 @@
 /**
  * daily-drop-banner.tsx
  *
- * Tappable banner for the Daily Drop with a 10-second countdown.
- * If the user doesn't tap within 10 seconds, the banner auto-dismisses.
+ * Tappable banner for the Daily Drop with a 15-second countdown.
+ * If the user doesn't tap within 15 seconds, a "See you tomorrow!"
+ * fanfare fires before the banner dismisses.
  * The countdown is visible on the banner to create urgency.
  *
  * X button on either state (inactive CTA or active pill) dismisses
@@ -21,6 +22,7 @@ type Props = {
   onActivate: () => void;
   onDeactivate: () => void;
   onDismiss: () => void;   // hide the banner for the day
+  onExpire?: () => void;   // countdown expired — triggers fanfare
 };
 
 export function DailyDropBanner({
@@ -31,8 +33,9 @@ export function DailyDropBanner({
   onActivate,
   onDeactivate,
   onDismiss,
+  onExpire,
 }: Props) {
-  const [secondsLeft, setSecondsLeft] = useState(10);
+  const [secondsLeft, setSecondsLeft] = useState(15);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hasActivatedRef = useRef(false);
 
@@ -47,16 +50,20 @@ export function DailyDropBanner({
     }
   }, [isActive]);
 
-  // 10-second countdown — only runs when banner is inactive and hasn't been activated yet
+  // 15-second countdown — only runs when banner is inactive and hasn't been activated yet
   useEffect(() => {
     if (hasActivatedRef.current || isActive) return;
 
     timerRef.current = setInterval(() => {
       setSecondsLeft((prev) => {
         if (prev <= 1) {
-          // Time's up — auto-dismiss
+          // Time's up — trigger fanfare then dismiss
           if (timerRef.current) clearInterval(timerRef.current);
-          onDismiss();
+          if (onExpire) {
+            onExpire();
+          } else {
+            onDismiss();
+          }
           return 0;
         }
         return prev - 1;
@@ -66,7 +73,7 @@ export function DailyDropBanner({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isActive, onDismiss]);
+  }, [isActive, onDismiss, onExpire]);
 
   if (dropCount === 0) return null;
 

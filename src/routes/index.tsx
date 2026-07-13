@@ -10,6 +10,7 @@ import { LevelProgress } from "@/components/level-progress";
 import { LevelUpCelebration } from "@/components/level-up-celebration";
 import { DailyDropBanner } from "@/components/daily-drop-banner";
 import { DailyDropComplete } from "@/components/daily-drop-complete";
+import { DailyDropExpired } from "@/components/daily-drop-expired";
 import { ShareHint, useShareHint } from "@/components/share-prompt";
 import { BottomNav } from "@/components/bottom-nav";
 import { OfflineBanner } from "@/components/offline-banner";
@@ -110,6 +111,17 @@ function Discover() {
   }, []);
 
   const handleDismissDrop = useCallback(() => {
+    dismissForDay();
+    setDailyDropActive(false);
+  }, [dismissForDay]);
+
+  // Countdown expired fanfare state
+  const [showDropExpired, setShowDropExpired] = useState(false);
+  const handleDropExpire = useCallback(() => {
+    setShowDropExpired(true);
+  }, []);
+  const handleDropExpiredDismiss = useCallback(() => {
+    setShowDropExpired(false);
     dismissForDay();
     setDailyDropActive(false);
   }, [dismissForDay]);
@@ -451,6 +463,7 @@ function Discover() {
             onActivate={handleActivateDrop}
             onDeactivate={handleDeactivateDrop}
             onDismiss={handleDismissDrop}
+            onExpire={handleDropExpire}
           />
         )}
 
@@ -509,6 +522,12 @@ function Discover() {
       <DailyDropComplete
         visible={showDropComplete}
         onDismiss={handleDropComplete}
+      />
+
+      {/* Daily Drop countdown expired fanfare */}
+      <DailyDropExpired
+        visible={showDropExpired}
+        onDismiss={handleDropExpiredDismiss}
       />
     </motion.div>
   );
