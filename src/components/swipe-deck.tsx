@@ -178,9 +178,11 @@ export function SwipeCard({
         g.longPressTriggered = true;
         shareJustFiredRef.current = true;
         void haptic("medium");
-        void shareProduct(product);
-        // Reset the cooldown after a short delay so future taps work normally
-        setTimeout(() => { shareJustFiredRef.current = false; }, 600);
+        // Keep cooldown active until share sheet is fully dismissed,
+        // then add 300ms buffer so the dismissal tap doesn't register
+        shareProduct(product).finally(() => {
+          setTimeout(() => { shareJustFiredRef.current = false; }, 300);
+        });
       }
     }, LONG_PRESS_MS);
   }, [isTop, product]);
