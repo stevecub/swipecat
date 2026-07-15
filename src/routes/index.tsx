@@ -200,8 +200,9 @@ function Discover() {
       const restored: Product[] = [];
       for (const id of cached.queueIds) {
         const p = productMap.get(id);
-        // Only include if the product still exists and hasn't been liked/passed
-        if (p && !excludeSet.has(id)) {
+        // Only include if the product still exists, hasn't been liked/passed,
+        // AND still matches the currently selected categories.
+        if (p && !excludeSet.has(id) && productMatchesCategories(p.category, selected)) {
           restored.push(p);
         }
       }
@@ -467,7 +468,7 @@ function Discover() {
           />
         )}
 
-        <div className="relative mx-auto w-full max-w-md" style={{ height: "calc(100% - 0.5rem)" }}>
+        <div className="relative mx-auto w-full max-w-md px-2" style={{ height: "calc(100% - 1.5rem)" }}>
           {showOfflineState ? (
             <OfflineState onRetry={loadProducts} />
           ) : activeProducts.length > 0 ? (

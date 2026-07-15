@@ -91,7 +91,7 @@ function Categories() {
         </div>
 
         {/* Amazon Associates disclosure */}
-        <p className="mt-6 text-center text-[10px] leading-relaxed text-muted-foreground/70 pb-2">
+        <p className="mt-6 text-center text-[10px] leading-relaxed text-muted-foreground/70 pb-8">
           As an Amazon Associate we earn from qualifying purchases.{" "}
           <Link to="/about" className="underline">
             Learn more
