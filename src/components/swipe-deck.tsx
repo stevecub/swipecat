@@ -62,16 +62,18 @@ export function SwipeCard({
   onSwipe,
   isTop,
   stackIndex,
-  dragProgress, // 0→ 1 from the top card, drives background card reveal
+  dragProgress, // signed: positive=right, negative=left
   onDragProgress, // callback to report drag progress to parent
+  onCardX, // callback to report actual card X position for claw sync
   isDailyDrop = false,
 }: {
   product: Product;
   onSwipe: (action: Action) => void;
   isTop: boolean;
   stackIndex: number;
-  dragProgress: number; // simple number now, not a MotionValue
+  dragProgress: number;
   onDragProgress?: (progress: number) => void;
+  onCardX?: (x: number) => void;
   isDailyDrop?: boolean;
 }) {
   const x = useMotionValue(0);
@@ -203,12 +205,16 @@ export function SwipeCard({
     x.set(dx * 0.7);
     y.set(dy * 0.2); // dampen vertical movement more
 
-    // Report drag progress to parent for background card reveal + paw animation
+    // Report drag progress to parent for background card reveal + claw animation
     // Use SIGNED progress: positive = right (like), negative = left (pass)
     const dampenedDx = dx * 0.7;
     if (onDragProgress) {
       const signedProgress = dampenedDx / SWIPE_COMMIT_DISTANCE; // -1 to +1 (can exceed)
       onDragProgress(signedProgress);
+    }
+    // Report actual card X position for claw sync
+    if (onCardX) {
+      onCardX(dampenedDx);
     }
 
     // Calculate velocity (exponential moving average)
@@ -261,12 +267,13 @@ export function SwipeCard({
     } else if (cardX < -SWIPE_COMMIT_DISTANCE * 0.6 || g.velocityX < -SWIPE_COMMIT_VELOCITY) {
       commitSwipe("pass");
     } else {
-      // Snap back to center
+      // Snap back to center — claw retracts
       if (onDragProgress) onDragProgress(0);
+      if (onCardX) onCardX(0);
       animate(x, 0, { type: "spring", stiffness: 500, damping: 35 });
       animate(y, 0, { type: "spring", stiffness: 500, damping: 35 });
     }
-  }, [x, y, product, commitSwipe]);
+  }, [x, y, product, commitSwipe, onCardX]);
 
   const handlePointerCancel = useCallback((e: React.PointerEvent) => {
     const g = gestureRef.current;
@@ -533,9 +540,10 @@ export function SwipeDeck({
 
   const visible = useMemo(() => products.slice(index, index + premarkWindow), [products, index, premarkWindow]);
 
-  // Track drag progress for background card reveal (0→1)
-  // Updated via a subscription to the top card's x motion value
+  // Track drag progress (signed: positive=right/like, negative=left/pass)
+  // and the actual card X position for syncing the claw movement
   const [dragProgress, setDragProgress] = useState(0);
+  const [cardX, setCardX] = useState(0);
 
   const prevVisibleKey = useRef<string>("");
   useEffect(() => {
@@ -551,6 +559,7 @@ export function SwipeDeck({
     if (!current) return;
     onAction(current, action);
     setDragProgress(0);
+    setCardX(0);
     setIndex((i) => {
       const next = i + 1;
       onIndexChange?.(next);
@@ -586,9 +595,9 @@ export function SwipeDeck({
 
   return (
     <div className="relative h-full w-full overflow-visible">
-      {/* Cat paws reaching from edges */}
-      <CatPaw side="right" progress={dragProgress > 0 ? dragProgress : 0} />
-      <CatPaw side="left" progress={dragProgress < 0 ? Math.abs(dragProgress) : 0} />
+      {/* Cat claws reaching from edges to grab the card */}
+      <CatPaw side="right" progress={dragProgress > 0 ? dragProgress : 0} cardX={cardX} />
+      <CatPaw side="left" progress={dragProgress < 0 ? Math.abs(dragProgress) : 0} cardX={cardX} />
 
       <AnimatePresence mode="popLayout">
         {visible
@@ -606,6 +615,7 @@ export function SwipeDeck({
                 onSwipe={handle}
                 dragProgress={isTop ? 0 : dragProgress}
                 onDragProgress={isTop ? setDragProgress : undefined}
+                onCardX={isTop ? setCardX : undefined}
                 isDailyDrop={isDailyDrop}
               />
             );
