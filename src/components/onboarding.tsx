@@ -371,7 +371,7 @@ function ScreenMechanic({ onNext }: { onNext: () => void }) {
         transition={{ duration: 0.4, delay: 0.1 }}
       >
         <h2 className="text-2xl font-black leading-snug tracking-tight">
-          Swipe Right to save it.<br />Swipe Left to keep it.
+          Swipe Right to save it.<br />Swipe Left to pass.
         </h2>
         <p className="mt-2 text-base text-muted-foreground">That's literally it.</p>
       </motion.div>
