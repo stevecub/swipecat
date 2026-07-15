@@ -467,7 +467,7 @@ function ScreenCategories({ onComplete }: { onComplete: () => void }) {
   return (
     <motion.div
       key="screen-categories"
-      className="flex h-full flex-col px-5 pb-8 pt-10"
+      className="flex h-full flex-col justify-center px-5 pb-8 pt-16"
       initial={{ opacity: 0, x: 60 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -60 }}
@@ -508,7 +508,7 @@ function ScreenCategories({ onComplete }: { onComplete: () => void }) {
                 <motion.button
                   onClick={() => toggle(c.id)}
                   aria-pressed={active}
-                  className={`relative flex w-full flex-col items-start gap-2 rounded-2xl p-4 text-left transition-colors ${
+                  className={`relative flex w-full items-center justify-center gap-2 rounded-2xl p-4 text-center transition-colors ${
                     active
                       ? "bg-primary text-primary-foreground shadow-md"
                       : "bg-card ring-1 ring-border"
@@ -517,7 +517,7 @@ function ScreenCategories({ onComplete }: { onComplete: () => void }) {
                   animate={active ? { scale: [1, 1.06, 1] } : { scale: 1 }}
                   transition={{ duration: 0.25 }}
                 >
-                  <span className="text-3xl">{c.emoji}</span>
+                  <span className="text-2xl">{c.emoji}</span>
                   <span className="text-sm font-semibold leading-tight">{c.label}</span>
                   <AnimatePresence>
                     {active && (

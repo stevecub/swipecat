@@ -68,26 +68,7 @@ export function SwipeCounters({
 
   return (
     <div className="flex w-full items-center justify-between">
-      {/* Like counter — LEFT: menu opens rightward (left-aligned) */}
-      <Counter
-        count={likeCount}
-        icon={<Heart className="h-3.5 w-3.5 fill-current" />}
-        bgColor="#dcfce7"
-        textColor="#16a34a"
-        label="Liked"
-        onShare={handleShareLiked}
-        onClear={onClearLiked}
-        onViewAll={() => navigate({ to: "/liked" })}
-        clearLabel="Clear all liked items"
-        menuAlign="left"
-      />
-
-      {/* Branding — CENTER */}
-      <div className="flex items-center gap-2">
-        {brandingSlot}
-      </div>
-
-      {/* Pass counter — RIGHT: menu opens leftward (right-aligned) */}
+      {/* Pass counter — LEFT: menu opens rightward (left-aligned) */}
       <Counter
         count={passCount}
         icon={<X className="h-3.5 w-3.5" strokeWidth={3} />}
@@ -98,6 +79,25 @@ export function SwipeCounters({
         onClear={onClearPassed}
         onViewAll={() => navigate({ to: "/passed" })}
         clearLabel="Clear all passed items"
+        menuAlign="left"
+      />
+
+      {/* Branding — CENTER */}
+      <div className="flex items-center gap-2">
+        {brandingSlot}
+      </div>
+
+      {/* Like counter — RIGHT: menu opens leftward (right-aligned) */}
+      <Counter
+        count={likeCount}
+        icon={<Heart className="h-3.5 w-3.5 fill-current" />}
+        bgColor="#dcfce7"
+        textColor="#16a34a"
+        label="Liked"
+        onShare={handleShareLiked}
+        onClear={onClearLiked}
+        onViewAll={() => navigate({ to: "/liked" })}
+        clearLabel="Clear all liked items"
         menuAlign="right"
       />
     </div>

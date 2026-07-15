@@ -65,13 +65,13 @@ function Categories() {
                 <button
                   onClick={() => toggle(c.id)}
                   aria-pressed={active}
-                  className={`relative flex w-full flex-col items-start gap-2 rounded-2xl p-4 text-left transition ${
+                  className={`relative flex w-full items-center justify-center gap-2 rounded-2xl p-4 text-center transition ${
                     active
                       ? "bg-primary text-primary-foreground shadow-md"
                       : "bg-card ring-1 ring-border"
                   }`}
                 >
-                  <span className="text-3xl">{c.emoji}</span>
+                  <span className="text-2xl">{c.emoji}</span>
                   <span className="text-sm font-semibold leading-tight">{c.label}</span>
                   {active && (
                     <span className="absolute right-2 top-2 rounded-full bg-white/90 p-1 text-primary">
