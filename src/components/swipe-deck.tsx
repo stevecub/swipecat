@@ -5,6 +5,7 @@ import { Share } from "@capacitor/share";
 import { buildBuyUrl, type Product } from "@/lib/products";
 import { haptic } from "@/lib/haptics";
 import { getSocialProofCount, formatLikeCount } from "@/lib/social-proof";
+import { CatPaw } from "@/components/cat-paw";
 
 type Action = "like" | "pass";
 
@@ -198,12 +199,16 @@ export function SwipeCard({
     }
 
     // Set card position directly — no middleware, no internal state
-    x.set(dx);
-    y.set(dy * 0.3); // dampen vertical movement
+    // Apply dampening (0.7x) so the card moves more slowly/deliberately
+    x.set(dx * 0.7);
+    y.set(dy * 0.2); // dampen vertical movement more
 
-    // Report drag progress to parent for background card reveal
+    // Report drag progress to parent for background card reveal + paw animation
+    // Use SIGNED progress: positive = right (like), negative = left (pass)
+    const dampenedDx = dx * 0.7;
     if (onDragProgress) {
-      onDragProgress(Math.min(1, Math.abs(dx) / FLY_OFF_DISTANCE));
+      const signedProgress = dampenedDx / SWIPE_COMMIT_DISTANCE; // -1 to +1 (can exceed)
+      onDragProgress(signedProgress);
     }
 
     // Calculate velocity (exponential moving average)
@@ -216,10 +221,8 @@ export function SwipeCard({
     g.lastX = e.clientX;
     g.lastTime = now;
 
-    // Mid-drag commit: if velocity is high enough, commit immediately
-    if (Math.abs(g.velocityX) > SWIPE_COMMIT_VELOCITY && Math.abs(dx) > 30) {
-      commitSwipe(g.velocityX > 0 ? "like" : "pass");
-    }
+    // No mid-drag commit — card only commits on finger lift.
+    // This lets the user drag freely and change their mind.
   }, [x, y, commitSwipe]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
@@ -250,10 +253,12 @@ export function SwipeCard({
       return;
     }
 
-    // Check if swipe should commit (by distance or velocity)
-    if (dx > SWIPE_COMMIT_DISTANCE || g.velocityX > SWIPE_COMMIT_VELOCITY) {
+    // Commit decision based on the card's ACTUAL position (dampened)
+    // or a strong velocity flick. Decision only happens on lift-off.
+    const cardX = x.get(); // actual card position (dampened)
+    if (cardX > SWIPE_COMMIT_DISTANCE * 0.6 || g.velocityX > SWIPE_COMMIT_VELOCITY) {
       commitSwipe("like");
-    } else if (dx < -SWIPE_COMMIT_DISTANCE || g.velocityX < -SWIPE_COMMIT_VELOCITY) {
+    } else if (cardX < -SWIPE_COMMIT_DISTANCE * 0.6 || g.velocityX < -SWIPE_COMMIT_VELOCITY) {
       commitSwipe("pass");
     } else {
       // Snap back to center
@@ -278,10 +283,11 @@ export function SwipeCard({
     animate(y, 0, { type: "spring", stiffness: 500, damping: 35 });
   }, [x, y]);
 
-  // Background card transforms — simple CSS driven by dragProgress prop (0→1)
-  const bgScale = 1 - stackIndex * 0.04 + dragProgress * 0.04;
-  const bgYOffset = stackIndex * 10 - dragProgress * 10;
-  const bgOpacityVal = 0.85 + dragProgress * 0.15;
+  // Background card transforms — simple CSS driven by |dragProgress| (now signed)
+  const absDrag = Math.min(1, Math.abs(dragProgress));
+  const bgScale = 1 - stackIndex * 0.04 + absDrag * 0.04;
+  const bgYOffset = stackIndex * 10 - absDrag * 10;
+  const bgOpacityVal = 0.85 + absDrag * 0.15;
 
   /**
    * Golden Card: products with rating ≥ 4.5 and reviewCount ≥ 1000 get a
@@ -579,7 +585,11 @@ export function SwipeDeck({
   }
 
   return (
-    <div className="relative h-full w-full">
+    <div className="relative h-full w-full overflow-visible">
+      {/* Cat paws reaching from edges */}
+      <CatPaw side="right" progress={dragProgress > 0 ? dragProgress : 0} />
+      <CatPaw side="left" progress={dragProgress < 0 ? Math.abs(dragProgress) : 0} />
+
       <AnimatePresence mode="popLayout">
         {visible
           .slice()
