@@ -1,13 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { X, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BottomNav } from "@/components/bottom-nav";
 import { OfflineBanner } from "@/components/offline-banner";
+import { ProductContextMenu } from "@/components/product-context-menu";
 import { buildBuyUrl, getProducts, type Product } from "@/lib/products";
 import { getCachedProducts } from "@/lib/product-cache";
 import { useProductLists } from "@/hooks/use-product-lists";
 import { useNetwork } from "@/hooks/use-network";
+import { haptic } from "@/lib/haptics";
+
+const LONG_PRESS_MS = 500;
 
 export const Route = createFileRoute("/passed")({
   head: () => ({
@@ -24,8 +28,14 @@ export const Route = createFileRoute("/passed")({
 function Passed() {
   const [remoteProducts, setRemoteProducts] = useState<Product[]>([]);
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
-  const { lists, remove, clearPassed } = useProductLists();
+  const { lists, like, pass, remove, clearPassed } = useProductLists();
   const { isOnline } = useNetwork();
+
+  // Context menu state
+  const [menuProduct, setMenuProduct] = useState<Product | null>(null);
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressFiredRef = useRef(false);
 
   // Try to fetch from Supabase (for any items not in local cache)
   useEffect(() => {
@@ -33,23 +43,53 @@ function Passed() {
   }, []);
 
   // Build the items list using local cache first, then remote as fallback.
-  // This ensures items display even offline or when Supabase doesn't return them.
   const items: Product[] = (() => {
     const cached = getCachedProducts(lists.passed);
     const result: Product[] = [];
     for (let i = 0; i < lists.passed.length; i++) {
       const id = lists.passed[i];
-      // Try cache first
       if (cached[i]) {
         result.push(cached[i]!);
       } else {
-        // Fallback to remote fetch
         const remote = remoteProducts.find((p) => p.id === id);
         if (remote) result.push(remote);
       }
     }
     return result;
   })();
+
+  // Long-press handlers
+  const handlePointerDown = useCallback((e: React.PointerEvent, product: Product) => {
+    longPressFiredRef.current = false;
+    longPressTimerRef.current = setTimeout(() => {
+      longPressFiredRef.current = true;
+      haptic("medium");
+      setMenuProduct(product);
+      setMenuPosition({ x: e.clientX, y: e.clientY });
+    }, LONG_PRESS_MS);
+  }, []);
+
+  const handlePointerUp = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  const handlePointerCancel = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  // Prevent link navigation if long-press fired
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    if (longPressFiredRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, []);
 
   const handleClearAll = () => {
     setConfirmClearOpen(false);
@@ -109,18 +149,23 @@ function Passed() {
                     ease: "easeInOut",
                   }}
                   className="group relative overflow-hidden rounded-xl bg-card ring-1 ring-border"
+                  onPointerDown={(e) => handlePointerDown(e, p)}
+                  onPointerUp={handlePointerUp}
+                  onPointerCancel={handlePointerCancel}
                 >
                   <a
                     href={buildBuyUrl(p)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block"
+                    onClick={handleClick}
                   >
                     <div className="aspect-square overflow-hidden">
                       <img
                         src={p.image}
                         alt={p.title}
                         loading="lazy"
+                        draggable={false}
                         className="h-full w-full object-cover transition group-active:scale-95"
                       />
                     </div>
@@ -146,6 +191,24 @@ function Passed() {
           </ul>
         )}
       </main>
+
+      {/* Long-press context menu */}
+      {menuProduct && (
+        <ProductContextMenu
+          product={menuProduct}
+          currentList="passed"
+          position={menuPosition}
+          onMove={() => {
+            like(menuProduct.id);
+            setMenuProduct(null);
+          }}
+          onRemove={() => {
+            remove(menuProduct.id);
+            setMenuProduct(null);
+          }}
+          onClose={() => setMenuProduct(null)}
+        />
+      )}
 
       {/* Clear All confirmation dialog */}
       <AnimatePresence>

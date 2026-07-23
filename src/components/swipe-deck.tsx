@@ -375,13 +375,13 @@ export function SwipeCard({
               style={{ opacity: passOpacity }}
             />
             <motion.div
-              className="absolute left-5 top-6 rotate-[-12deg] rounded-lg border-4 border-[var(--color-like)] px-3 py-1 text-xl font-black tracking-widest text-[var(--color-like)]"
+              className="absolute left-5 top-6 z-10 rotate-[-12deg] rounded-lg border-4 border-[var(--color-like)] px-3 py-1 text-xl font-black tracking-widest text-[var(--color-like)]"
               style={{ opacity: likeOpacity }}
             >
               LIKE
             </motion.div>
             <motion.div
-              className="absolute right-5 top-6 rotate-[12deg] rounded-lg border-4 border-[var(--color-pass)] px-3 py-1 text-xl font-black tracking-widest text-[var(--color-pass)]"
+              className="absolute right-5 top-6 z-10 rotate-[12deg] rounded-lg border-4 border-[var(--color-pass)] px-3 py-1 text-xl font-black tracking-widest text-[var(--color-pass)]"
               style={{ opacity: passOpacity }}
             >
               PASS
