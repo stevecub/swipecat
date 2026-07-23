@@ -28,6 +28,7 @@ import { useDailyDrop } from "@/hooks/use-daily-drop";
 import { productMatchesCategories } from "@/lib/categories";
 import { claimDeferredLink } from "@/lib/deferred-links";
 import { saveQueueCache, loadQueueCache, clearQueueCache, categoriesHash } from "@/lib/queue-cache";
+import { suppressTodaysNotification } from "@/lib/daily-notifications";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -99,6 +100,8 @@ function Discover() {
     setDailyDropActive(true);
     setDropSwipeCount(0);
     markDropSeen();
+    // User engaged with Daily Drop — suppress today's notification
+    suppressTodaysNotification().catch(() => {});
   }, [markDropSeen]);
 
   const handleDeactivateDrop = useCallback(() => {
@@ -361,6 +364,9 @@ function Discover() {
     recordSwipe();
     recordSwipeForLevel();
     excludeAtBuildRef.current.add(product.id);
+
+    // User is actively swiping — suppress today's notification (idempotent)
+    suppressTodaysNotification().catch(() => {});
 
     // Track daily drop progress
     if (dailyDropActive) {

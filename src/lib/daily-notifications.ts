@@ -162,6 +162,69 @@ async function cancelDailyNotification() {
   }
 }
 
+/** Key to track whether we've already suppressed today's notification */
+const SUPPRESSED_KEY = "swipecat:daily-notif-suppressed:v1";
+
+/** Get today's date as YYYY-MM-DD */
+function todayStr(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/**
+ * Suppress today's daily notification because the user already engaged.
+ * Cancels the pending notification for today, then re-schedules for tomorrow
+ * so the repeating cycle isn't broken.
+ *
+ * Safe to call multiple times per day — only acts once.
+ */
+export async function suppressTodaysNotification(): Promise<void> {
+  if (!Capacitor.isNativePlatform()) return;
+  if (!isDailyNotifEnabled()) return;
+
+  // Only suppress once per day
+  try {
+    const lastSuppressed = window.localStorage.getItem(SUPPRESSED_KEY);
+    if (lastSuppressed === todayStr()) return;
+    window.localStorage.setItem(SUPPRESSED_KEY, todayStr());
+  } catch {
+    // Ignore storage errors
+  }
+
+  // Cancel today's notification
+  await cancelDailyNotification();
+
+  // Re-schedule for tomorrow at 10 AM so the daily cycle continues
+  try {
+    const msg = pickMessage();
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(10, 0, 0, 0);
+
+    await LocalNotifications.schedule({
+      notifications: [
+        {
+          id: NOTIFICATION_ID,
+          title: msg.title,
+          body: msg.body,
+          schedule: {
+            on: {
+              hour: 10,
+              minute: 0,
+            },
+            repeats: true,
+            allowWhileIdle: true,
+          },
+          sound: undefined,
+          autoCancel: true,
+        },
+      ],
+    });
+  } catch (err) {
+    console.error("Failed to re-schedule notification after suppression:", err);
+  }
+}
+
 /**
  * Initialize notifications on app startup.
  * Re-schedules with a fresh message on every launch so the copy stays
