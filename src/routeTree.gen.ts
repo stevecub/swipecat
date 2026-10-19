@@ -18,8 +18,8 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
-import { Route as AdminCapacitorRouteImport } from './routes/admin.capacitor'
 import { Route as AdminLinksRouteImport } from './routes/admin.links'
+import { Route as AdminCapacitorRouteImport } from './routes/admin.capacitor'
 
 const _rootCapacitorRoute = _rootCapacitorRouteImport.update({
   id: '/__root/capacitor',
@@ -66,14 +66,14 @@ const ProductIdRoute = ProductIdRouteImport.update({
   path: '/product/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminCapacitorRoute = AdminCapacitorRouteImport.update({
-  id: '/capacitor',
-  path: '/capacitor',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminLinksRoute = AdminLinksRouteImport.update({
   id: '/links',
   path: '/links',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCapacitorRoute = AdminCapacitorRouteImport.update({
+  id: '/capacitor',
+  path: '/capacitor',
   getParentRoute: () => AdminRoute,
 } as any)
 
@@ -236,18 +236,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/capacitor': {
-      id: '/admin/capacitor'
-      path: '/capacitor'
-      fullPath: '/admin/capacitor'
-      preLoaderRoute: typeof AdminCapacitorRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/links': {
       id: '/admin/links'
       path: '/links'
       fullPath: '/admin/links'
       preLoaderRoute: typeof AdminLinksRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/capacitor': {
+      id: '/admin/capacitor'
+      path: '/capacitor'
+      fullPath: '/admin/capacitor'
+      preLoaderRoute: typeof AdminCapacitorRouteImport
       parentRoute: typeof AdminRoute
     }
   }
