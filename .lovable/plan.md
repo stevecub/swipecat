@@ -1,73 +1,31 @@
-# Ship SwipeCat to the App Store — Step-by-Step
+# Risk review: accessibility, IP, Amazon, and App Store
 
-Since you've got Mac + Xcode + Apple Developer Program ready, here's the lean step-by-step. I do all code, config, assets, and copy. You only step in for short tasks that need your Mac or Apple ID.
+## Biggest risks found (in priority order)
 
-We go **one step at a time**. After each step I'll stop, tell you exactly what (if anything) you need to do, and wait for your "done" before moving on.
+1. **Amazon product data source (highest risk).** Amazon's Associates rules only allow product data, images and prices from their official product API (or SiteStripe). Our catalog was loaded through a third-party scraper (Rainforest). That can get the affiliate account closed and commissions forfeited. Fix: switch to Amazon's official API as soon as it's unlocked (it unlocks after 3 qualifying sales), and until then keep the catalog small.
+2. **Prices shown without a date.** Amazon requires any displayed price to say when it was checked, and it must be refreshed at least every 24 hours, or prices hidden. Fix: show "Price as of [date/time]. Details" next to each price, and hide prices older than 24 hours.
+3. **"Tinder" in the page description.** Using another company's trademark in our description/listing invites a complaint. Fix: reword to "Swipe to discover great products."
+4. **Swipe-only actions (accessibility).** After removing the X/heart buttons, Like/Pass only work by swiping. Accessibility rules (WCAG 2.5.1/2.5.7) and VoiceOver users need a non-swipe way. Fix: add small, labeled Pass / Like buttons (or VoiceOver actions) under the card.
+5. **Motion sensitivity.** Pulsing hints, jiggling badges and celebrations ignore the iPhone "Reduce Motion" setting. Fix: calm these down when Reduce Motion is on.
+6. **Screen-reader labels and contrast.** Several icon-only buttons have no spoken label; some gray text on white and the white toggle knob are low contrast; tap targets under 44px. Fix: add labels, darken text, enlarge tap targets.
+7. **App Store review items.** Make sure the privacy policy matches what we collect, the App Privacy answers in App Store Connect say "no data collected/linked" (if true), and the app clearly does more than a website wrapper (haptics, notifications, offline cache already help).
 
----
+## Lower risk / fine as is
+- The name "SwipeCat" and the cat icon are original; "swipe" itself is a common word. A quick trademark search on USPTO before launch is still wise.
+- Affiliate disclosure is already in the right places.
+- Product images are Amazon's; we must not crop, edit, or watermark them (we don't).
 
-## Step 1 — Decisions (2 min, you)
-I ask 4 short questions: bundle ID, support email, app name/subtitle, icon direction.
+## What I'd build
+- Price-as-of timestamp + 24-hour hide rule (with a small test).
+- Reword the "Tinder" description.
+- Labeled Pass/Like buttons for accessibility (compact, matches design).
+- Reduce Motion support for hints, badges, celebrations.
+- Accessibility labels, contrast, and tap-target fixes across screens.
+- A short note in the admin page reminding to move to the official Amazon API.
 
-## Step 2 — App polish for iOS (me)
-- Safe-area insets (notch / Dynamic Island / home indicator)
-- Disable iOS pull-to-refresh, double-tap zoom, text-selection on cards
-- Status bar styling
-- Hide `/admin` in production
-- Tap-target + mobile-viewport audit
+Not legal advice — for the Amazon data question especially, it's worth a quick read of the Associates Operating Agreement.
 
-## Step 3 — Required legal pages (me)
-- `/privacy` — privacy policy (no accounts, local storage only, affiliate disclosure, contact)
-- `/about` — long-form affiliate disclosure + app description (reviewers read this)
-
-## Step 4 — App icon + launch screen (me)
-- Generate icon at 1024×1024 and the full iOS icon set
-- Generate launch screen
-- Drop into `ios-assets/` ready for Xcode
-
-## Step 5 — Capacitor wiring (me)
-- `capacitor.config.ts` with your bundle ID + app name
-- Add `@capacitor/core`, `ios`, `status-bar`, `splash-screen`, `haptics`
-- Wire native haptics into swipe gestures
-- Write `IOS-BUILD.md` with the exact commands you'll run
-
-## Step 6 — Export to your Mac (~5 min, you, I guide)
-Exact commands I'll give you:
-```
-git clone <repo-url>
-cd swipecat
-npm install
-npm run build
-npx cap add ios
-npx cap sync ios
-npx cap open ios
-```
-
-## Step 7 — Xcode setup (~10 min, you, I guide click-by-click)
-- Select signing team
-- Confirm bundle ID
-- Drag in the icon set
-- Set version `1.0.0`, build `1`
-- Run in Simulator to verify
-
-## Step 8 — Screenshots for the App Store (me)
-Generate the required 6.9" and 6.5" iPhone screenshots from the running preview.
-
-## Step 9 — App Store Connect listing (me writes, you paste, ~15 min)
-Ready-to-paste copy for every field:
-- Name, subtitle, promo text, description, keywords, what's new
-- Category, age rating answers, privacy "nutrition label" answers
-- **Review notes** — pre-written explanation of the affiliate model so reviewers don't flag it
-- Support URL + privacy policy URL (live pages from Step 3)
-
-## Step 10 — Archive & submit (~10 min, you, I guide)
-Xcode → Product → Archive → Distribute → Upload. Then in App Store Connect: attach build, Submit for Review.
-
-## Step 11 — Review wait + reply (Apple, 24–72 hrs)
-If Apple comes back with questions, forward me the message and I'll draft your reply.
-
----
-
-## Kicking off now
-
-Approve and I'll send the 4 Step 1 questions in the very next message. After your answers, I dive straight into Step 2.
+## Technical details
+- `useReducedMotion` from framer-motion in swipe-hints, streak-badge, level-up-celebration; CSS `@media (prefers-reduced-motion)` for `.animate-badge-jiggle`.
+- Use stored `updated_at` on products for "as of" timestamp; helper `isPriceFresh()` with vitest test.
+- Replace hardcoded gray/white classes with tokens in context menu and toggle.
