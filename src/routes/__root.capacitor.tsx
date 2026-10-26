@@ -33,7 +33,7 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
   // IMPORTANT: Do NOT use useRouter() here — if the router hasn't initialized
   // when this error fires, useRouter() throws, causing React to unmount
   // everything and show a blank screen.
