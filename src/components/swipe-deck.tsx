@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { AnimatePresence, motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { Share } from "@capacitor/share";
-import { buildBuyUrl, type Product } from "@/lib/products";
+import { buildBuyUrl, isPriceFresh, formatPriceAsOf, type Product } from "@/lib/products";
 import { haptic } from "@/lib/haptics";
 import { getSocialProofCount, formatLikeCount } from "@/lib/social-proof";
 import { CatPaw } from "@/components/cat-paw";

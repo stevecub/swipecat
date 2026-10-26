@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Heart, ExternalLink } from "lucide-react";
-import { buildBuyUrl, getProduct, type Product } from "@/lib/products";
+import { buildBuyUrl, isPriceFresh, formatPriceAsOf, getProduct, type Product } from "@/lib/products";
 import { useProductLists } from "@/hooks/use-product-lists";
 
 export const Route = createFileRoute("/product/$id")({
