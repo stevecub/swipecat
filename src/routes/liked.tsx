@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BottomNav } from "@/components/bottom-nav";
 import { OfflineBanner } from "@/components/offline-banner";
 import { ProductContextMenu } from "@/components/product-context-menu";
-import { buildBuyUrl, getProducts, type Product } from "@/lib/products";
+import { buildBuyUrl, isPriceFresh, getProducts, type Product } from "@/lib/products";
 import { getCachedProducts } from "@/lib/product-cache";
 import { useProductLists } from "@/hooks/use-product-lists";
 import { useNetwork } from "@/hooks/use-network";
@@ -174,7 +174,7 @@ function Liked() {
                         {p.title}
                       </h3>
                       <p className="mt-1 text-xs font-bold">
-                        {p.price != null ? `$${Number(p.price).toFixed(2)}` : "View price"}
+                        {isPriceFresh(p) ? `$${Number(p.price).toFixed(2)}` : "View price"}
                       </p>
                     </div>
                   </a>

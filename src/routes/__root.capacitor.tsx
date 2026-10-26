@@ -33,7 +33,7 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
   // IMPORTANT: Do NOT use useRouter() here — if the router hasn't initialized
   // when this error fires, useRouter() throws, causing React to unmount
   // everything and show a blank screen.
@@ -49,7 +49,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
           Something went wrong. Try going back home.
         </p>
         <p style={{ color: '#e74c3c', fontSize: '0.75rem', fontFamily: 'monospace', marginTop: '0.5rem', wordBreak: 'break-all' }}>
-          {error?.message}
+          {(error as Error | null)?.message}
         </p>
         <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
           <button
