@@ -57,7 +57,7 @@ export function DailyPicksToggle() {
       {/* iOS-style toggle */}
       <div
         className={`relative h-7 w-12 rounded-full transition-colors duration-200 ${
-          enabled ? "bg-primary" : "bg-gray-300"
+          enabled ? "bg-primary" : "bg-muted-foreground/50"
         }`}
       >
         <div

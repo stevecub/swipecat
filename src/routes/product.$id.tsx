@@ -58,7 +58,18 @@ function ProductDetail() {
         </span>
         <div className="mt-1 flex items-start justify-between gap-4">
           <h1 className="text-2xl font-black leading-tight">{product.title}</h1>
-          <div className="shrink-0 text-2xl font-black">{product.price != null ? `$${product.price}` : ""}</div>
+          <div className="shrink-0 text-right">
+            {isPriceFresh(product) ? (
+              <>
+                <div className="text-2xl font-black">${Number(product.price).toFixed(2)}</div>
+                {product.priceUpdatedAt && (
+                  <div className="text-[10px] text-muted-foreground">{formatPriceAsOf(product.priceUpdatedAt)}. Prices may change.</div>
+                )}
+              </>
+            ) : (
+              <div className="text-sm font-semibold text-muted-foreground">See price on Amazon</div>
+            )}
+          </div>
         </div>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{product.description}</p>
 

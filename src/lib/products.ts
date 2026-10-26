@@ -11,6 +11,8 @@ export type Product = {
   asin?: string | null;
   rating?: number | null;
   reviewCount?: number | null;
+  /** ISO time the price was last checked */
+  priceUpdatedAt?: string | null;
 };
 
 type DbProduct = {
@@ -24,6 +26,7 @@ type DbProduct = {
   asin: string | null;
   rating: number | string | null;
   review_count: number | null;
+  updated_at?: string | null;
 };
 
 /**
@@ -74,6 +77,7 @@ function fromDb(r: DbProduct): Product {
     asin: r.asin,
     rating: r.rating == null ? null : Number(r.rating),
     reviewCount: r.review_count,
+    priceUpdatedAt: r.updated_at ?? null,
   };
 }
 
@@ -111,7 +115,7 @@ export async function getProducts(): Promise<Product[]> {
     CATEGORY_VALUES.map(async (cat) => {
       const { data, error } = await supabase
         .from("products")
-        .select("id, title, description, price, currency, image, category, asin, rating, review_count")
+        .select("id, title, description, price, currency, image, category, asin, rating, review_count, updated_at")
         .eq("category", cat)
         .order("id")
         .limit(PER_CATEGORY);
@@ -139,7 +143,7 @@ export async function getProducts(): Promise<Product[]> {
 export async function getProduct(id: string): Promise<Product | undefined> {
   const { data, error } = await supabase
     .from("products")
-    .select("id, title, description, price, currency, image, category, asin, rating, review_count")
+    .select("id, title, description, price, currency, image, category, asin, rating, review_count, updated_at")
     .eq("id", id)
     .maybeSingle();
   if (error || !data) return undefined;
@@ -154,4 +158,19 @@ export function buildBuyUrl(product: Product): string {
     : `https://www.amazon.com/s?k=${encodeURIComponent(product.title)}`;
   const sep = base.includes("?") ? "&" : "?";
   return AFFILIATE_TAG ? `${base}${sep}tag=${AFFILIATE_TAG}` : base;
+}
+
+/** Amazon rule: prices older than 24 hours must not be shown. */
+export const PRICE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+export function isPriceFresh(p: Pick<Product, "price" | "priceUpdatedAt">, now: number = Date.now()): boolean {
+  if (p.price == null || !p.priceUpdatedAt) return false;
+  const t = Date.parse(p.priceUpdatedAt);
+  if (Number.isNaN(t)) return false;
+  return now - t <= PRICE_MAX_AGE_MS && now - t >= -60_000;
+}
+
+export function formatPriceAsOf(iso: string): string {
+  const d = new Date(iso);
+  return `Price as of ${d.toLocaleDateString(undefined, { month: "short", day: "numeric" })}, ${d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}`;
 }

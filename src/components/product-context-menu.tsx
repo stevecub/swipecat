@@ -116,7 +116,8 @@ export function ProductContextMenu({
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.85 }}
         transition={{ duration: 0.15, ease: "easeOut" }}
-        className="fixed z-[101] w-[180px] overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-black/5"
+        role="menu" aria-label="Product actions"
+        className="fixed z-[101] w-[180px] overflow-hidden rounded-xl bg-popover shadow-2xl ring-1 ring-border"
         style={{ left, top }}
         onClick={(e) => e.stopPropagation()}
         onPointerDown={(e) => e.stopPropagation()}
@@ -124,36 +125,36 @@ export function ProductContextMenu({
         <button
           type="button"
           onClick={handleMove}
-          className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-medium text-gray-800 active:bg-gray-100"
+          className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-medium text-popover-foreground active:bg-muted"
         >
-          <ArrowRightLeft className="h-4 w-4 text-gray-500" />
+          <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
           {moveLabel}
         </button>
-        <div className="mx-3 h-px bg-gray-100" />
+        <div className="mx-3 h-px bg-border" />
         <button
           type="button"
           onClick={handleShare}
-          className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-medium text-gray-800 active:bg-gray-100"
+          className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-medium text-popover-foreground active:bg-muted"
         >
-          <Share2 className="h-4 w-4 text-gray-500" />
+          <Share2 className="h-4 w-4 text-muted-foreground" />
           Share
         </button>
-        <div className="mx-3 h-px bg-gray-100" />
+        <div className="mx-3 h-px bg-border" />
         <button
           type="button"
           onClick={handleViewOnAmazon}
-          className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-medium text-gray-800 active:bg-gray-100"
+          className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-medium text-popover-foreground active:bg-muted"
         >
-          <ExternalLink className="h-4 w-4 text-gray-500" />
+          <ExternalLink className="h-4 w-4 text-muted-foreground" />
           View on Amazon
         </button>
-        <div className="mx-3 h-px bg-gray-100" />
+        <div className="mx-3 h-px bg-border" />
         <button
           type="button"
           onClick={handleRemove}
-          className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-medium text-red-500 active:bg-red-50"
+          className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-medium text-destructive active:bg-destructive/10"
         >
-          <Trash2 className="h-4 w-4 text-red-400" />
+          <Trash2 className="h-4 w-4 text-destructive" />
           Remove
         </button>
       </motion.div>

@@ -174,7 +174,7 @@ function Liked() {
                         {p.title}
                       </h3>
                       <p className="mt-1 text-xs font-bold">
-                        {p.price != null ? `$${Number(p.price).toFixed(2)}` : "View price"}
+                        {isPriceFresh(p) ? `$${Number(p.price).toFixed(2)}` : "View price"}
                       </p>
                     </div>
                   </a>

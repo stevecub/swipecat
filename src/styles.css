@@ -198,3 +198,13 @@
 .animate-badge-jiggle {
   animation: badge-jiggle 4s ease-in-out 0.5s infinite;
 }
+
+/* Respect the iPhone "Reduce Motion" setting */
+@media (prefers-reduced-motion: reduce) {
+  .animate-badge-jiggle,
+  .animate-pulse,
+  .animate-ping,
+  .animate-bounce {
+    animation: none !important;
+  }
+}

@@ -42,7 +42,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "SwipeCat — Discover products you'll love" },
       {
         property: "og:description",
-        content: "A Tinder-style way to discover great products on your phone.",
+        content: "Swipe to discover great products on your phone.",
       },
     ],
   }),

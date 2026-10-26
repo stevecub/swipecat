@@ -416,10 +416,13 @@ export function SwipeCard({
             </div>
             <div className="shrink-0 text-right">
               <div className="text-lg font-black">
-                {product.price != null
+                {isPriceFresh(product)
                   ? `$${Number(product.price).toFixed(2)}`
-                  : <span className="text-sm font-medium text-white/60">Price on Amazon</span>}
+                  : <span className="text-sm font-medium text-white/80">See price on Amazon</span>}
               </div>
+              {isPriceFresh(product) && product.priceUpdatedAt && (
+                <div className="text-[9px] text-white/75">{formatPriceAsOf(product.priceUpdatedAt)}</div>
+              )}
             </div>
           </div>
 
@@ -597,6 +600,15 @@ export function SwipeDeck({
 
   return (
     <div className="relative h-full w-full overflow-visible">
+      {/* Screen-reader / keyboard alternative to swiping (WCAG 2.5.1) */}
+      <div className="sr-only focus-within:not-sr-only focus-within:absolute focus-within:inset-x-0 focus-within:-bottom-14 focus-within:z-50 focus-within:flex focus-within:justify-center focus-within:gap-3">
+        <button type="button" onClick={() => handle("pass")} className="min-h-11 rounded-full bg-card px-5 text-sm font-semibold text-foreground ring-1 ring-border">
+          Pass on {products[index]?.title}
+        </button>
+        <button type="button" onClick={() => handle("like")} className="min-h-11 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground">
+          Like {products[index]?.title}
+        </button>
+      </div>
       {/* Cat claws reaching from edges to grab the card */}
       <CatPaw side="right" progress={dragProgress > 0 ? dragProgress : 0} cardX={cardX} />
       <CatPaw side="left" progress={dragProgress < 0 ? Math.abs(dragProgress) : 0} cardX={cardX} />
