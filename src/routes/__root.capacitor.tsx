@@ -49,7 +49,7 @@ function ErrorComponent({ error, reset }: { error: unknown; reset: () => void })
           Something went wrong. Try going back home.
         </p>
         <p style={{ color: '#e74c3c', fontSize: '0.75rem', fontFamily: 'monospace', marginTop: '0.5rem', wordBreak: 'break-all' }}>
-          {error?.message}
+          {(error as Error | null)?.message}
         </p>
         <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
           <button
