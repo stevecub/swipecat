@@ -51,14 +51,14 @@ function AdminLinksPage() {
     setLoading(true);
     // Fetch stats from the view
     const { data: statsData } = await supabase
-      .from("deferred_link_stats")
+      .from("deferred_link_stats" as never)
       .select("*")
       .single();
     if (statsData) setStats(statsData as unknown as LinkStats);
 
     // Fetch recent links
     const { data: recentData } = await supabase
-      .from("deferred_links")
+      .from("deferred_links" as never)
       .select("*")
       .order("created_at", { ascending: false })
       .limit(20);
@@ -73,7 +73,7 @@ function AdminLinksPage() {
   }
 
   async function handleCleanup() {
-    await supabase.rpc("cleanup_expired_deferred_links");
+    await supabase.rpc("cleanup_expired_deferred_links" as never);
     await fetchData();
   }
 
